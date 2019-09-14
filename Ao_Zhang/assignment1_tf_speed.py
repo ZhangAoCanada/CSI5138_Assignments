@@ -36,20 +36,16 @@ class PolynomialModel:
 
     def GradientDescent(self):
         prediction = self.Polynomial()
-        for i in range(self.order):
-            if not self.regularization:
-                operator = self.Theta[i].assign(tf.add(self.Theta[i] , self.learning_rate\
-                                            * tf.reduce_sum(2 * (self.Y - prediction)\
-                                            * (self.X ** i)) / self.batch_size))
-            else:
-                operator = self.Theta[i].assign(tf.add(tf.add(self.Theta[i] , self.learning_rate\
-                                            * tf.reduce_sum(2 * (self.Y - prediction)\
-                                            * (self.X ** i)) / self.batch_size)), -2 * self.reg_lambda\
-                                            * (self.Theta[i] ** 2))
-            yield operator
-
-    def getParameterValues(self):
-        return self.Theta
+        if not self.regularization:
+            operator = self.Theta.assign(tf.add(self.Theta , self.learning_rate\
+                                        * tf.reduce_sum(2 * (self.Y - tf.transpose(prediction))\
+                                        * self.X_poly / self.batch_size)))
+        else:
+            operator = self.Theta[i].assign(tf.add(tf.add(self.Theta[i] , self.learning_rate\
+                                        * tf.reduce_sum(2 * (self.Y - prediction)\
+                                        * (self.X ** i)) / self.batch_size)), -2 * self.reg_lambda\
+                                        * (self.Theta[i] ** 2))
+        return operator
 
 
 def getData(num_data, variance):
@@ -122,16 +118,18 @@ regularization = False
 train_x, train_y = getData(N, sigma)
 
 model = PolynomialModel(d, N, learning_rate, regularization)
-
+op = model.GradientDescent()
 sess = tf.Session()
 init = tf.initializers.global_variables()
 
 sess.run(init)
 
-test = sess.run(model.Polynomial(), feed_dict = {model.X : train_x, model.Y : train_y})
+test1 = sess.run(model.Theta, feed_dict = {model.X : train_x, model.Y : train_y})
+print(test1)
+test2 = sess.run(op, feed_dict = {model.X : train_x, model.Y : train_y})
+test3 = sess.run(model.Theta, feed_dict = {model.X : train_x, model.Y : train_y})
 
-print(test.shape)
-print(test)
+print(test3)
 # E_in_bar, E_out_bar, E_bias = experiment(d, N, sigma, learning_rate, regularization)
 
 # E_in_plot.append(E_in_bar)
