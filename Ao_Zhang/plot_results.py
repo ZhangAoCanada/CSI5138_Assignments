@@ -3,10 +3,14 @@ matplotlib.use("tkagg")
 import matplotlib.pyplot as plt
 import numpy as np
 
+current_test = "test_d"
+N = 100
+d = "all"
+sigma = 0.1
 
-E_in = np.load("saved_results/N_10_d_all_sig_0.1_Ein.npy")
-E_out = np.load("saved_results/N_10_d_all_sig_0.1_Eout.npy")
-E_bias = np.load("saved_results/N_10_d_all_sig_0.1_Ebias.npy")
+E_in = np.load("saved_results/" + current_test + "N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_Ein.npy")
+E_out = np.load("saved_results/" + current_test + "N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_Eout.npy")
+E_bias = np.load("saved_results/" + current_test + "N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_Ebias.npy")
 
 x = np.arange(21)
 

@@ -1,5 +1,8 @@
 from tqdm import tqdm
 
-a = "all"
+a = ["1", "2"]
+b = ["3", "4"]
 
-print(str(a))
+c = a + b
+
+print(c)
