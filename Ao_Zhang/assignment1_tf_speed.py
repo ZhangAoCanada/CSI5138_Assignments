@@ -58,8 +58,8 @@ class PolynomialModel:
 def getData(num_data, variance):
     x = np.random.uniform(0., 1., size = (num_data,))
     y = np.cos(2 * np.pi * x) + np.random.normal(0, variance, size = (num_data,))
-    x = np.expand_dims(x)
-    y = np.expand_dims(y)
+    x = np.expand_dims(x, axis = -1)
+    y = np.expand_dims(y, axis = -1)
     return x, y
 
 def fitData(sess, model, num_train, variance):
