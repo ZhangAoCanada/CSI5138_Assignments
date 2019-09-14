@@ -37,9 +37,9 @@ class PolynomialModel:
     def GradientDescent(self):
         prediction = self.Polynomial()
         # if not self.regularization:
-        operator = self.Theta.assign(tf.add(self.Theta , self.learning_rate\
+        operator = self.Theta.assign(tf.add(self.Theta , tf.transpose(tf.matmul(self.learning_rate\
                                         * 2 * tf.transpose(self.Y - prediction)\
-                                        * self.X_poly / self.batch_size))
+                                        , self.X_poly) / self.batch_size)))
         # else:
         #     operator = self.Theta[i].assign(tf.add(tf.add(self.Theta[i] , self.learning_rate\
         #                                 * tf.reduce_sum(2 * (self.Y - prediction)\

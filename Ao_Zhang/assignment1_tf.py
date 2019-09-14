@@ -68,7 +68,7 @@ def fitData(sess, model, num_train, variance):
 
 def experiment(order, num_train, variance, learning_rate, regularization = False):
     M = 50
-    num_bias = 5000
+    num_bias = 2000
     bias_x, bias_y = getData(num_bias, variance)
     E_in_all = []
     E_out_all = []
@@ -110,9 +110,9 @@ count = 0
 
 for d in d_all:
     print("Current sequence:\t %d / %d "%(count, len(d_all)))
-    N = 100
+    N = 10
     sigma = 0.1
-    learning_rate = 0.5
+    learning_rate = 0.3
 
     regularization = False
 
@@ -121,7 +121,7 @@ for d in d_all:
     E_in_plot.append(E_in_bar)
     E_out_plot.append(E_out_bar)
     E_bias_plot.append(E_bias)
-    
+
     count += 1
 
 fig = plt.figure(figsize = (8, 8))
