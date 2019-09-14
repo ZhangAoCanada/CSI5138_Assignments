@@ -1,5 +1,9 @@
 import matplotlib
 matplotlib.use("tkagg")
+import os
+##### set specific gpu #####
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
@@ -75,7 +79,8 @@ def experiment(order, num_train, variance, learning_rate, regularization = False
     theta_all = []
     model = PolynomialModel(order, num_train, learning_rate, regularization)
     init = tf.initializers.global_variables()
-    sess = tf.Session()
+    gpu_options = tf.GPUOptions(allow_growth=True)
+    sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
     for _ in range(M):
         sess.run(init)
         E_in, E_out, theta = fitData(sess, model, num_train, variance)

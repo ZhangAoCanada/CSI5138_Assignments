@@ -1,5 +1,5 @@
-import numpy as np
+from tqdm import tqdm
 
-a = np.arange(21)
+a = "all"
 
-print(a)
+print(str(a))
