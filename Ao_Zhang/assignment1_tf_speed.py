@@ -27,10 +27,7 @@ class PolynomialModel:
         return X_poly_form
     
     def Polynomial(self):
-        function = tf.constant([0.])
-        for i in range(self.order):
-            function += self.Theta[i] * (self.X ** i)
-        return function
+        return self.X_poly * self.Theta
 
     def getMSE(self):
         prediction = self.Polynomial()
@@ -131,10 +128,10 @@ init = tf.initializers.global_variables()
 
 sess.run(init)
 
-test = sess.run(model.X_poly, feed_dict = {model.X : train_x, model.Y : train_y})
+test = sess.run(model.Polynomial(), feed_dict = {model.X : train_x, model.Y : train_y})
 
 print(test.shape)
-print(test[0])
+print(test)
 # E_in_bar, E_out_bar, E_bias = experiment(d, N, sigma, learning_rate, regularization)
 
 # E_in_plot.append(E_in_bar)
