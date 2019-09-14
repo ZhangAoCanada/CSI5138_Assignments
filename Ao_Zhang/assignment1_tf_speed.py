@@ -99,7 +99,7 @@ def getData(num_data, variance):
 
 def fitData(sess, model, num_train, variance):
     num_test = 2000
-    epoches = 200
+    epoches = 2000
     # produce training data and test data
     train_x, train_y = getData(num_train, variance)
     test_x, test_y = getData(num_test, variance)
@@ -172,10 +172,10 @@ def experiment(sess, order, num_train, variance, learning_rate, debug = False, r
     return E_in_bar, E_out_bar, E_bias
 
 def debug():
-    N = 100
-    d = 8
+    N = 200
+    d = 20
     sigma = 0.1
-    learning_rate = 0.5
+    learning_rate = 0.1
     regularization = False
     debug = True
 
@@ -210,6 +210,8 @@ def main(current_test):
     E_bias_plot = []
 
     total_len = len(all_changing_data[test_num])
+
+    print(total_len)
     
     # specify the memory management of GPU
     gpu_options = tf.GPUOptions(allow_growth=True)
@@ -223,14 +225,14 @@ def main(current_test):
             d = 10
             sigma = 0.1
         elif test_num == 1:
-            N = 100
+            N = 200
             d = d_all[ind]
             sigma = 0.1
         else:
             N = 50
             d = 10
             sigma = sigma_all[ind]
-        learning_rate = 0.5
+        learning_rate = 0.1
 
         # whether using regularization
         regularization = False
