@@ -58,6 +58,8 @@ class PolynomialModel:
 def getData(num_data, variance):
     x = np.random.uniform(0., 1., size = (num_data,))
     y = np.cos(2 * np.pi * x) + np.random.normal(0, variance, size = (num_data,))
+    x = np.expand_dims(x)
+    y = np.expand_dims(y)
     return x, y
 
 def fitData(sess, model, num_train, variance):
@@ -113,7 +115,7 @@ E_in_plot = []
 E_out_plot = []
 E_bias_plot = []
 
-N = 100
+N = 10
 d = 2
 sigma = 0.1
 learning_rate = 0.5
