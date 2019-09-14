@@ -27,7 +27,7 @@ class PolynomialModel:
         return X_poly_form
     
     def Polynomial(self):
-        return self.X_poly * self.Theta
+        return tf.matmul(self.X_poly, self.Theta)
 
     def getMSE(self):
         prediction = self.Polynomial()
