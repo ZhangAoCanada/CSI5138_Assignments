@@ -20,6 +20,10 @@ class PolynomialModel:
         self.batch_size = batch_size
         self.regularization = regularization
         self.reg_lambda = 5e-4
+        if self.order >= 5:
+            self.stochastic_size = 5
+        else:
+            self.stochastic_size = self.order
 
     def debug(self):
         return self.Theta
@@ -37,7 +41,9 @@ class PolynomialModel:
 
     def GradientDescent(self):
         prediction = self.Polynomial()
-        for i in range(self.order):
+        hm_variables_ind = np.arange(self.order)
+        np.random.shuffle(hm_variables_ind)
+        for i in hm_variables_ind[:self.stochastic_size]:
             if not self.regularization:
                 operator = self.Theta[i].assign(tf.add(self.Theta[i] , self.learning_rate\
                                             * tf.reduce_sum(2 * (self.Y - prediction)\

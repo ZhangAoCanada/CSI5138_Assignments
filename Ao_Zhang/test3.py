@@ -21,14 +21,14 @@ from multiprocessing import Process
 Create the polynomial model with the given parameters
 """
 class PolynomialModel:
-    def __init__(self, order, batch_size, learning_rate, regularization = False):
+    def __init__(self, order, batch_size, learning_rate, number, regularization = False):
         self.order = order + 1
         # build placeholder for inputs and outputs
         self.X = tf.placeholder(tf.float32, [None, 1], "input")
         self.Y = tf.placeholder(tf.float32, [None, 1], "label")
         self.X_poly = self.RebuildInput()
         # prepare the variables for training
-        self.Theta = tf.get_variable("parameters" + str(self.order), [self.order, 1],
+        self.Theta = tf.get_variable("parameters" + str(number), [self.order, 1],
                                     dtype = tf.float32, initializer = tf.glorot_uniform_initializer())
         self.learning_rate = learning_rate
         self.batch_size = batch_size
@@ -130,7 +130,7 @@ def fitData(sess, model, num_train, variance):
 
     return E_in, E_out, para
 
-def experiment(sess, order, num_train, variance, learning_rate, debug = False, regularization = False):
+def experiment(sess, order, num_train, variance, learning_rate, count, debug = False, regularization = False):
     M = 50
     num_bias = 3000
 
@@ -142,7 +142,7 @@ def experiment(sess, order, num_train, variance, learning_rate, debug = False, r
     theta_all = []
     
     # build the model
-    model = PolynomialModel(order, num_train, learning_rate, regularization)
+    model = PolynomialModel(order, num_train, learning_rate, count, regularization)
     init = tf.initializers.global_variables()
 
     for _ in tqdm(range(M)):
@@ -257,7 +257,7 @@ def main(current_test):
         regularization = False
 
         # run experiment()
-        E_in_bar, E_out_bar, E_bias = experiment(sess, d, N, sigma, learning_rate, regularization = regularization)
+        E_in_bar, E_out_bar, E_bias = experiment(sess, d, N, sigma, learning_rate, ind, regularization = regularization)
 
         # store the values
         E_in_plot.append(E_in_bar)
@@ -288,7 +288,7 @@ if __name__ == "__main__":
         2. "test_d"
         3. "test_sigma"
     """
-    current_test = "test_d"
+    current_test = "test_sigma"
     p = Process(target = main, args=(current_test,))
     p.start()
     p.join()

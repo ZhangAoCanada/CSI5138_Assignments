@@ -1,8 +1,6 @@
 from tqdm import tqdm
 
-a = ["1", "2"]
-b = ["3", "4"]
+a = 10
+b = a // 10
 
-c = a + b
-
-print(c)
+print(b)
