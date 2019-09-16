@@ -6,7 +6,6 @@ import numpy as np
 current_test = "test_d"
 
 # set a switch case for switch the questions quickly
-all_changing_data = [N_all, d_all, sigma_all]
 switcher = {"test_N": 0,
             "test_d": 1,
             "test_sigma": 2}
@@ -16,21 +15,24 @@ if test_num == 0:
     N = "all"
     d = 10
     sigma = 0.1
+    leng = 7
 elif test_num == 1:
-    N = 20
+    N = 10
     d = "all"
     sigma = 0.1
+    leng = 21
 else:
     N = 20
     d = 10
     sigma = "all"
+    leng = 3
 
 
-E_in = np.load("saved_results/" + current_test + "N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_Ein.npy")
-E_out = np.load("saved_results/" + current_test + "N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_Eout.npy")
-E_bias = np.load("saved_results/" + current_test + "N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_Ebias.npy")
+E_in = np.load("results/" + current_test + "N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_Ein.npy")
+E_out = np.load("results/" + current_test + "N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_Eout.npy")
+E_bias = np.load("results/" + current_test + "N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_Ebias.npy")
 
-x = np.arange(21)
+x = np.arange(leng)
 
 
 fig = plt.figure(figsize = (8, 8))
@@ -38,4 +40,5 @@ ax1 = fig.add_subplot(111)
 ax1.plot(x, E_in, "r")
 ax1.plot(x, E_out, "g")
 ax1.plot(x, E_bias, "b")
+# ax1.set_ylim((0, 20))
 plt.show()

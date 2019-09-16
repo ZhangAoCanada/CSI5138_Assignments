@@ -21,14 +21,14 @@ from multiprocessing import Process
 Create the polynomial model with the given parameters
 """
 class PolynomialModel:
-    def __init__(self, order, batch_size, learning_rate, number, regularization = False):
+    def __init__(self, order, batch_size, learning_rate, regularization = False):
         self.order = order + 1
         # build placeholder for inputs and outputs
         self.X = tf.placeholder(tf.float32, [None, 1], "input")
         self.Y = tf.placeholder(tf.float32, [None, 1], "label")
         self.X_poly = self.RebuildInput()
         # prepare the variables for training
-        self.Theta = tf.get_variable("parameters" + str(number), [self.order, 1],
+        self.Theta = tf.get_variable("parameters" + str(self.order), [self.order, 1],
                                     dtype = tf.float32, initializer = tf.glorot_uniform_initializer())
         self.learning_rate = learning_rate
         self.batch_size = batch_size
@@ -97,31 +97,17 @@ def getData(num_data, variance):
     y = np.expand_dims(y, axis = -1)
     return x, y
 
-def fitData(sess, model, num_train, variance):
-    num_test = 2000
-    epoches = 3000
-    # produce training data and test data
-    train_x, train_y = getData(num_train, variance)
-    test_x, test_y = getData(num_test, variance)
+def fitData(sess, model, train_x, train_y, test_x, test_y, num_train, variance):
+    epoches = 2000
 
     # using gradient descent with proper learning_rate and epoches to learn the function
     op = model.GradientDescent()
     for each_epoch in range(epoches):
         # set the maximum batch size to 5
-        if num_train >= 1000:
-            batch = 10
-        else:
-            batch = num_train
-        hm_batches = num_train // batch
-
-        for each_batch in range(hm_batches):
-            batch_start = each_batch * batch
-            batch_end = (each_batch + 1) * batch
-            test = sess.run(op, feed_dict = {model.X : train_x[batch_start:batch_end], 
-                                            model.Y : train_y[batch_start:batch_end]})
+        test = sess.run(op, feed_dict = {model.X : train_x, model.Y : train_y})
 
         # add a learning rate decay, to make the results converge better
-        if each_epoch // 50: 
+        if each_epoch // 20: 
             model.learning_rate *= 0.96
     
     # get the outputs
@@ -130,19 +116,23 @@ def fitData(sess, model, num_train, variance):
 
     return E_in, E_out, para
 
-def experiment(sess, order, num_train, variance, learning_rate, count, debug = False, regularization = False):
+def experiment(sess, order, num_train, variance, learning_rate, debug = False, regularization = False):
     M = 50
     num_bias = 3000
-
-    # produce data for calculating biases
-    bias_x, bias_y = getData(num_bias, variance)
+    num_test = 2000
 
     E_in_all = []
     E_out_all = []
     theta_all = []
+
+    # produce training data and test data
+    train_x, train_y = getData(num_train, variance)
+    test_x, test_y = getData(num_test, variance)
+    bias_x, bias_y = getData(num_bias, variance)
+
     
     # build the model
-    model = PolynomialModel(order, num_train, learning_rate, count, regularization)
+    model = PolynomialModel(order, num_train, learning_rate, regularization)
     init = tf.initializers.global_variables()
 
     for _ in tqdm(range(M)):
@@ -150,7 +140,8 @@ def experiment(sess, order, num_train, variance, learning_rate, count, debug = F
         sess.run(init)
         model.learning_rate = learning_rate
         # training the model
-        E_in, E_out, theta = fitData(sess, model, num_train, variance)
+        E_in, E_out, theta = fitData(sess, model, train_x, train_y, 
+                                    test_x, test_y, num_train, variance)
         # store the results
         E_in_all.append(E_in)
         E_out_all.append(E_out)
@@ -241,10 +232,10 @@ def main(current_test):
         # set all parameters
         if test_num == 0:
             N = N_all[ind]
-            d = 10
+            d = 20
             sigma = 0.1
         elif test_num == 1:
-            N = 20
+            N = 50
             d = d_all[ind]
             sigma = 0.1
         else:
@@ -257,7 +248,7 @@ def main(current_test):
         regularization = False
 
         # run experiment()
-        E_in_bar, E_out_bar, E_bias = experiment(sess, d, N, sigma, learning_rate, ind, regularization = regularization)
+        E_in_bar, E_out_bar, E_bias = experiment(sess, d, N, sigma, learning_rate, regularization = regularization)
 
         # store the values
         E_in_plot.append(E_in_bar)
@@ -276,9 +267,9 @@ def main(current_test):
     else:
         sigma = "all"
 
-    np.save("saved_results/" + current_test + "N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_Ein.npy", E_in_plot)
-    np.save("saved_results/" + current_test + "N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_Eout.npy", E_out_plot)
-    np.save("saved_results/" + current_test + "N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_Ebias.npy", E_bias_plot)
+    np.save("results/" + current_test + "_N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_Ein.npy", E_in_plot)
+    np.save("results/" + current_test + "_N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_Eout.npy", E_out_plot)
+    np.save("results/" + current_test + "_N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_Ebias.npy", E_bias_plot)
 
 if __name__ == "__main__":
     # multi-processing
@@ -288,7 +279,7 @@ if __name__ == "__main__":
         2. "test_d"
         3. "test_sigma"
     """
-    current_test = "test_sigma"
+    current_test = "test_d"
     p = Process(target = main, args=(current_test,))
     p.start()
     p.join()
