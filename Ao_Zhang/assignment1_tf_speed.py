@@ -21,14 +21,15 @@ from multiprocessing import Process
 Create the polynomial model with the given parameters
 """
 class PolynomialModel:
-    def __init__(self, order, batch_size, learning_rate, regularization = False):
+    def __init__(self, order, batch_size, learning_rate, index, regularization = False):
         self.order = order + 1
+        self.index = index
         # build placeholder for inputs and outputs
         self.X = tf.placeholder(tf.float32, [None, 1], "input")
         self.Y = tf.placeholder(tf.float32, [None, 1], "label")
         self.X_poly = self.RebuildInput()
         # prepare the variables for training
-        self.Theta = tf.get_variable("parameters" + str(self.order), [self.order, 1],
+        self.Theta = tf.get_variable("parameters" + str(self.index), [self.order, 1],
                                     dtype = tf.float32, initializer = tf.glorot_uniform_initializer())
         self.learning_rate = learning_rate
         self.batch_size = batch_size
@@ -107,7 +108,7 @@ def fitData(sess, model, train_x, train_y, test_x, test_y, num_train, variance):
         test = sess.run(op, feed_dict = {model.X : train_x, model.Y : train_y})
 
         # add a learning rate decay, to make the results converge better
-        if each_epoch // 20: 
+        if each_epoch // 50: 
             model.learning_rate *= 0.96
     
     # get the outputs
@@ -116,7 +117,7 @@ def fitData(sess, model, train_x, train_y, test_x, test_y, num_train, variance):
 
     return E_in, E_out, para
 
-def experiment(sess, order, num_train, variance, learning_rate, debug = False, regularization = False):
+def experiment(sess, order, num_train, variance, learning_rate, ind, debug = False, regularization = False):
     M = 50
     num_bias = 3000
     num_test = 2000
@@ -132,7 +133,7 @@ def experiment(sess, order, num_train, variance, learning_rate, debug = False, r
 
     
     # build the model
-    model = PolynomialModel(order, num_train, learning_rate, regularization)
+    model = PolynomialModel(order, num_train, learning_rate, ind, regularization)
     init = tf.initializers.global_variables()
 
     for _ in tqdm(range(M)):
@@ -232,23 +233,23 @@ def main(current_test):
         # set all parameters
         if test_num == 0:
             N = N_all[ind]
-            d = 20
+            d = 5
             sigma = 0.1
         elif test_num == 1:
             N = 20
             d = d_all[ind]
             sigma = 0.1
         else:
-            N = 20
+            N = 200
             d = 10
             sigma = sigma_all[ind]
-        learning_rate = 0.2
+        learning_rate = 0.1
 
         # whether using regularization
         regularization = False
 
         # run experiment()
-        E_in_bar, E_out_bar, E_bias = experiment(sess, d, N, sigma, learning_rate, regularization = regularization)
+        E_in_bar, E_out_bar, E_bias = experiment(sess, d, N, sigma, learning_rate, ind, regularization = regularization)
 
         # store the values
         E_in_plot.append(E_in_bar)
