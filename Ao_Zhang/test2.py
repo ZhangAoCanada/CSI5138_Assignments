@@ -21,7 +21,7 @@ from multiprocessing import Process
 Create the polynomial model with the given parameters
 """
 class PolynomialModel:
-    def __init__(self, order, batch_size, learning_rate, index, regularization = False):
+    def __init__(self, order, batch_size, learning_rate, index, regularization):
         self.order = order + 1
         self.index = index
         # build placeholder for inputs and outputs
@@ -35,7 +35,7 @@ class PolynomialModel:
         self.batch_size = batch_size
         self.regularization = regularization
         # regularization lambda
-        self.reg_lambda = 5e-4
+        self.reg_lambda = 0.01
 
     def RebuildInput(self):
         """
@@ -99,6 +99,7 @@ def getData(num_data, variance):
     return x, y
 
 def fitData(sess, model, train_x, train_y, test_x, test_y, num_train, variance):
+    # add epoches for gradient descent
     epoches = 2000
 
     # using gradient descent with proper learning_rate and epoches to learn the function
@@ -108,7 +109,7 @@ def fitData(sess, model, train_x, train_y, test_x, test_y, num_train, variance):
         test = sess.run(op, feed_dict = {model.X : train_x, model.Y : train_y})
 
         # add a learning rate decay, to make the results converge better
-        if each_epoch // 50: 
+        if each_epoch // 100: 
             model.learning_rate *= 0.96
     
     # get the outputs
@@ -122,6 +123,7 @@ def experiment(sess, order, num_train, variance, learning_rate, ind, debug = Fal
     num_bias = 3000
     num_test = 2000
 
+    # initialize variables
     E_in_all = []
     E_out_all = []
     theta_all = []
@@ -130,10 +132,9 @@ def experiment(sess, order, num_train, variance, learning_rate, ind, debug = Fal
     train_x, train_y = getData(num_train, variance)
     test_x, test_y = getData(num_test, variance)
     bias_x, bias_y = getData(num_bias, variance)
-
     
     # build the model
-    model = PolynomialModel(order, num_train, learning_rate, ind, regularization)
+    model = PolynomialModel(order, num_train, learning_rate, ind, regularization = regularization)
     init = tf.initializers.global_variables()
 
     for _ in tqdm(range(M)):
@@ -181,9 +182,13 @@ def experiment(sess, order, num_train, variance, learning_rate, ind, debug = Fal
     return E_in_bar, E_out_bar, E_bias
 
 def debug():
+    """
+    for debug:
+        to tune the parameters in order to check whether the model could learn or not.
+    """
     N = 20
     sigma = 0.1
-    learning_rate = 0.2
+    learning_rate = 0.1
     regularization = False
     debug = True
 
@@ -195,7 +200,7 @@ def debug():
         d = d_all_s[i]
         E_in_bar, E_out_bar, E_bias = experiment(sess, d, N, sigma, learning_rate, debug = debug, regularization = regularization)
 
-def main(current_test, timetr):
+def main(current_test, regularization = False):
     """
     Main Function:
         given the changing variables and find out results.
@@ -245,9 +250,6 @@ def main(current_test, timetr):
             sigma = sigma_all[ind]
         learning_rate = 0.1
 
-        # whether using regularization
-        regularization = False
-
         # run experiment()
         E_in_bar, E_out_bar, E_bias = experiment(sess, d, N, sigma, learning_rate, ind, regularization = regularization)
 
@@ -268,23 +270,29 @@ def main(current_test, timetr):
     else:
         sigma = "all"
 
-    np.save("trials/" + current_test + str(timetr) + "_N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_Ein.npy", E_in_plot)
-    np.save("trials/" + current_test + str(timetr) + "_N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_Eout.npy", E_out_plot)
-    np.save("trials/" + current_test + str(timetr) + "_N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_Ebias.npy", E_bias_plot)
+    if regularization:
+        reg = "_regularized"
+    else:
+        reg = "_noreg"
+
+    np.save("results/" + current_test + "_N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + reg + "_Ein.npy", E_in_plot)
+    np.save("results/" + current_test + "_N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + reg + "_Eout.npy", E_out_plot)
+    np.save("results/" + current_test + "_N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + reg + "_Ebias.npy", E_bias_plot)
 
 if __name__ == "__main__":
     # multi-processing
     """
-    3 mode, for 3 questions respectively:
+    3 modes, for 3 questions respectively:
         1. "test_N"
         2. "test_d"
         3. "test_sigma"
     """
-    for tr in range(20):
-        current_test = "test_d"
-        p = Process(target = main, args=(current_test, tr))
-        p.start()
-        p.join()
+    current_test = "test_N"
+    regularization = True
+
+    p = Process(target = main, args=(current_test, regularization))
+    p.start()
+    p.join()
 
     # for debugging only.
     # debug()
