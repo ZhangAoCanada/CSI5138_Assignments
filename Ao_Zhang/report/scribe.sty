@@ -1,0 +1,52 @@
+%% This is style is produced based on Professor Frank R. Kschischang's
+%% lecture notes template for his coding theory course offered at U of Toronto.
+
+\ProvidesPackage{scribe}
+\RequirePackage{epsfig}
+\RequirePackage{graphicx}
+\RequirePackage{color}
+\RequirePackage{fancyheadings}
+%%
+%% Set up the fancy headings
+%%
+\lhead{{\sl University of Ottawa}}
+\chead{}
+\rhead{{\sl CSI5148 --- Introduction of Deep Learning and Reinforcement Learning}}
+\lfoot{{\sl Lecture Script, Fall 2010}}
+\cfoot{}
+\rfoot{\thepage}
+%\headrulewidth 0.4pt
+%\footrulewidth 0.4pt
+\pagestyle{fancy}
+%%
+%% Set up the desired page
+%%
+\hoffset 0pt
+\voffset 0pt
+\oddsidemargin 1.2in
+\evensidemargin \oddsidemargin
+\marginparwidth 0.8in
+\marginparsep   0.2in
+\reversemarginpar
+\textwidth 5.0in
+\headwidth \textwidth
+\addtolength{\headwidth}{\marginparsep}
+\addtolength{\headwidth}{\marginparwidth}
+\parindent 2em
+\parskip 1.5ex
+%%
+\newlength{\toleftedge}
+\setlength{\toleftedge}{\marginparsep}
+\addtolength{\toleftedge}{\marginparwidth}
+
+
+
+
+\newenvironment{lecture}[2]{\par\noindent\mbox{}\hspace*{-\toleftedge}{\bf Lectures of #1}\newline\mbox{}\hspace*{-\toleftedge}{\bf Scribe: #2}\par}{}
+\newenvironment{definition}{\par\noindent{\bf Definition:}\marginpar{$\star$}}{\par}
+\newenvironment{theorem}{\par\noindent{\bf Theorem:}\marginpar{$\star$}}{\par}
+\newenvironment{lemma}{\par\noindent{\bf Lemma:}\marginpar{$\star$}}{\par}
+\newenvironment{corollary}{\par\noindent{\bf Corollary:}\marginpar{$\star$}}{\par}
+\newenvironment{proposition}{\par\noindent{\bf Proposition:}\marginpar{$\star$}}{\par}
+\newcommand{\QED}{\hfill\rule{0.35em}{1em}}
+\newcommand{\Proof}{\noindent {\sl Proof}}
