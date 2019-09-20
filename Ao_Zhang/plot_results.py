@@ -1,4 +1,10 @@
-# for remote ssh plot
+"""
+CSI 5138:           Assignment 1
+Student Name:       Ao Zhang
+Student Number:     0300039680
+Student Email:      azhan085@uottawa.ca
+"""
+##### for plotting through X11 #####
 import matplotlib
 matplotlib.use("tkagg")
 import matplotlib.pyplot as plt
