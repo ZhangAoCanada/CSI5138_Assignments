@@ -89,6 +89,13 @@ class PolynomialModel:
 
 
 def getData(num_data, variance):
+    """
+    Function:
+        Produce the dataset according to the function: 
+            Y = cos(2 * pi * X) + Z
+        
+        where, Z belongs to white noise.
+    """
     # uniformly select x_data from (0, 1)
     x = np.random.uniform(0., 1., size = (num_data,))
     # produce Y = cos(2 * pi * X) + Z
@@ -99,6 +106,10 @@ def getData(num_data, variance):
     return x, y
 
 def fitData(sess, model, train_x, train_y, test_x, test_y, num_train, variance):
+    """
+    Function:
+        Fit the data into the model to train it.
+    """
     # add epoches for gradient descent
     epoches = 2000
 
@@ -119,6 +130,10 @@ def fitData(sess, model, train_x, train_y, test_x, test_y, num_train, variance):
     return E_in, E_out, para
 
 def experiment(sess, order, num_train, variance, learning_rate, ind, debug = False, regularization = False):
+    """
+    Function:
+        Do M times experiments and get E_in, E_out and E_bias out.
+    """
     M = 50
     num_bias = 3000
     num_test = 2000
@@ -186,7 +201,7 @@ def debug():
     for debug:
         to tune the parameters in order to check whether the model could learn or not.
     """
-    N = 20
+    N = 50
     sigma = 0.1
     learning_rate = 0.1
     regularization = False
