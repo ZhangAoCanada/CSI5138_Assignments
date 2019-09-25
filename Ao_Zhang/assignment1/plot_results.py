@@ -1,25 +1,46 @@
-# for remote ssh plot
+"""
+CSI 5138:           Assignment 1
+Student Name:       Ao Zhang
+Student Number:     0300039680
+Student Email:      azhan085@uottawa.ca
+"""
+##### for plotting through X11 #####
 import matplotlib
 matplotlib.use("tkagg")
 import matplotlib.pyplot as plt
 import numpy as np
 
 def Plotting(current_test, regularization = False):
+    """
+    Function:
+        Plot the result according to different args.
+    """
+    """
+    3 modes, for 3 questions respectively:
+        1. "test_N"
+        2. "test_d"
+        3. "test_sigma"
+    1 argument:
+        regularization = True or False
+    """
     # set a switch case for switch the questions quickly
     switcher = {"test_N": 0,
                 "test_d": 1,
                 "test_sigma": 2}
     test_num = switcher[current_test]
 
+    # set the value according to the questions for x axis of the plots
     N_all = np.array([2, 5, 10, 20, 50, 100, 200])
     d_all = np.arange(21)
     sigma_all = np.array([0.01, 0.1, 1])
 
+    # prepare the name of regularization or non-regularization
     if regularization:
         reg = "regularized"
     else:
         reg = "noreg"
 
+    # define the x label, y label and title with different modes
     if test_num == 0:
         N = "all"
         d = 5
@@ -48,10 +69,12 @@ def Plotting(current_test, regularization = False):
         label_x = "variance of dataset points"
         label_y = "Error Value"
 
+    # load the numpy array produced by the assignment1_tf.py
     E_in = np.load("results/" + current_test + "_N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_" + reg + "_Ein.npy")
     E_out = np.load("results/" + current_test + "_N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_" + reg + "_Eout.npy")
     E_bias = np.load("results/" + current_test + "_N_"+ str(N) +"_d_" + str(d) + "_sig_" + str(sigma) + "_" + reg + "_Ebias.npy")
 
+    # plot the figure and save it
     fig = plt.figure(figsize = (8, 8))
     ax1 = fig.add_subplot(111)
     ax1.set_xlabel(label_x)
@@ -72,7 +95,7 @@ if __name__== "__main__":
         3. "test_sigma"
     """
     # choose a plot
-    current_test = "test_sigma"
+    current_test = "test_d"
     regularization = True
 
     Plotting(current_test, regularization)
