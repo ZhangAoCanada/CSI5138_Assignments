@@ -96,6 +96,6 @@ if __name__== "__main__":
     """
     # choose a plot
     current_test = "test_d"
-    regularization = True
+    regularization = False
 
     Plotting(current_test, regularization)
