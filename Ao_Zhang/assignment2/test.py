@@ -1,8 +1,10 @@
-import numpy as np
+import tensorflow as tf
 
-a = np.array([[1,2,3], [4,5,6]])
-b = np.array([[13,14], [15, 16], [17,18]])
+a = tf.constant([[1], [2]])
 
-c = np.matmul(a, b)
+b = a.T
 
-print(c)
+sess = tf.Session()
+
+bbb = sess.run(b)
+print(bbb.shape)
