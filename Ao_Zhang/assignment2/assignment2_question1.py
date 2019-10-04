@@ -17,7 +17,11 @@ import numpy as np
 from tqdm import tqdm
 from multiprocessing import Process
 
+
 class QuestionOne:
+    """
+    Using tensorflow building the model
+    """
     def __init__(self, N, K):
         """
         Args:
@@ -26,10 +30,22 @@ class QuestionOne:
         """ 
         self.K = K
         self.batch_size = N
+        # build the place holder for the input
         self.X = tf.placeholder(tf.float32, shape = (None, self.K, 1))
-        self.A = tf.Variable(tf.glorot_uniform_initializer()((1, self.K, self.K)))
-        self.B = tf.Variable(tf.glorot_uniform_initializer()((1, self.K, self.K)))
+        # define variables
+        self.A = tf.Variable(tf.glorot_uniform_initializer()((self.K, self.K)))
+        self.B = tf.Variable(tf.glorot_uniform_initializer()((self.K, self.K)))
+        # repeat the weights into the shape (batch_size, weights_shape) for further computation
+        self.A_batch = self.WeightsBatch(self.A)
+        self.B_batch = self.WeightsBatch(self.B)
+        # define a learning rate
         self.learning_rate = 0.01
+
+    def WeightsBatch(self, weights):
+        """
+        Function: copy the weights from shape (K, K) to shape (batch_size, K, K)
+        """
+        return tf.ones([self.batch_size, 1., 1.]) * weights
 
     ###################################################################
     # define all functions and its relative gradients
@@ -91,115 +107,102 @@ class QuestionOne:
         """
         Function: Calculate loss function and forward gradient
         """
-        y = self.FuncLinear(self.A, self.X)
+        # forward loss function computation
+        y = self.FuncLinear(self.A_batch, self.X)
         u = self.Sigmoid(y)
-        v = self.FuncLinear(self.B, self.X)
-        z = self.FuncMultiplication(self.A, u, v)
-        omega = self.FuncLinear(self.A, z)
+        v = self.FuncLinear(self.B_batch, self.X)
+        z = self.FuncMultiplication(self.A_batch, u, v)
+        omega = self.FuncLinear(self.A_batch, z)
         loss = self.EuclideanNorm(omega)
 
-        grad_y_A, grad_y_X = self.GradientLinear(self.A, self.X)
+        # forward gradient computation for each edge
+        grad_y_A, grad_y_X = self.GradientLinear(self.A_batch, self.X)
         grad_u_y = self.GradientSigmoid(y)
-        grad_v_B, grad_v_X = self.GradientLinear(self.B, self.X)
-        grad_z_A, grad_z_u, grad_z_v = self.GradientMultiplication(self.A, u, v)
-        grad_omega_A, grad_omega_z = self.GradientLinear(self.A, z)
+        grad_v_B, grad_v_X = self.GradientLinear(self.B_batch, self.X)
+        grad_z_A, grad_z_u, grad_z_v = self.GradientMultiplication(self.A_batch, u, v)
+        grad_omega_A, grad_omega_z = self.GradientLinear(self.A_batch, z)
         grad_loss_omega = self.GradientEuclideanNorm(omega)
 
-        grad_A = tf.matmul(grad_omega_z, grad_loss_omega) * grad_z_u * grad_u_y
+        # transpose of forward gradient graph (back propogation) w.r.t parameter A
+        grad_A = tf.matmul(tf.matmul(grad_omega_z, grad_loss_omega) * grad_z_u * grad_u_y, grad_y_A) \
+                + tf.matmul(tf.matmul(grad_omega_z, grad_loss_omega), grad_z_A) \
+                + tf.matmul(grad_loss_omega, grad_omega_A)
+    
+        # transpose of forward gradient graph (back propogation) w.r.t parameter B
+        grad_B = tf.matmul(tf.matmul(grad_omega_z, grad_loss_omega) * grad_z_v, grad_v_B)
 
-        # grad_A = tf.matmul(tf.matmul(grad_omega_z, grad_loss_omega) * grad_z_u * grad_u_y, grad_y_A) \
-                # + tf.matmul(tf.matmul(grad_omega_z, grad_loss_omega), grad_z_A) \
-                # + tf.matmul(grad_loss_omega, grad_omega_A)
-
-        # grad_A = grad_y_A * grad_u_y * grad_z_u * grad_omega_z * grad_loss_omega \
-        #         + grad_z_A * grad_omega_z * grad_loss_omega \
-        #         + grad_omega_A * grad_loss_omega
-        # grad_B = grad_v_B * grad_z_v * grad_omega_z * grad_loss_omega
-
+        # define returns
         if name == "loss":
             return loss
         elif name == "gradient":
-            return grad_A, grad_z_u
+            return grad_A, grad_B
         else:
             raise ValueError("Namescope is wrong, please doublecheck the arguments")
-    
-    # def GradientGraph(self):
-    #     """
-    #     Function: Calculate forward gradient graph
-    #     """
-    #     grad_y_A, grad_y_X = self.GradientLinear(self.A)
-    #     grad_u = self.GradientSigmoid(grad_y)
-    #     grad_v = self.GradientLinear(self.B)
-    #     grad_z = self.GradientMultiplication(self.A, grad_u, grad_v)
-    #     grad_omega = self.GradientLinear(self.A) * grad_z
-    #     grad_loss = self.GradientEuclideanNorm(grad_omega)
-    #     return grad_loss
-
-    def DualGradient(self):
-        """
-        Function: Dual gradient = gradient.transpose()
-        """
-        gradient_A, gradient_B = self.ForwardGradientGraph(name = "gradient")
-        # Since the first dimension is the batch size, we should keep it in the first column
-        dual_grad_A = tf.transpose(gradient_A, perm = [0, 2, 1])
-        dual_grad_B = tf.transpose(gradient_B, perm = [0, 2, 1])
-        return dual_grad_A, dual_grad_B
 
     def BackPropGradientDescent(self):
         """
         Function: Apply GD based on back propagation
         """
-        grad_L_A, grad_L_B = self.DualGradient()
-        learning_A = tf.add(self.A, - tf.reduce_sum(self.learning_rate * grad_L_A, \
-                                                    axis = 0, keepdims=True))
-        learning_B = tf.add(self.B, -  tf.reduce_sum(self.learning_rate * grad_L_B, \
-                                                    axis = 0, keepdims=True))
+        # get the gradient of A and B
+        grad_L_A, grad_L_B = self.ForwardGradientGraph(name = "gradient")
+
+        # gradient descent
+        learning_A = tf.add(self.A, - tf.reduce_mean(self.learning_rate * grad_L_A, \
+                                                    axis = 0))
+        learning_B = tf.add(self.B, -  tf.reduce_mean(self.learning_rate * grad_L_B, \
+                                                    axis = 0))
+        
+        # assign values
         operation_A = self.A.assign(learning_A)
         operation_B = self.B.assign(learning_B)
         return operation_A, operation_B
 
 
+###################################################################
+# random test, feel free to tune all those parameters
+###################################################################
 if __name__ == "__main__":
-    N = 50
+
+    # input size
+    N = 100
+    # input dimension
     K = 5
 
-    # fig = plt.figure()
-    # ax1 = fig.add_subplot(111)
+    # use matplotlib instead of TensorBoard to plot
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
 
+    # start building model
     Q_one =  QuestionOne(N, K)
+
+    # produce random data
     X_data = np.random.randint(10, size = (N, K, 1))
 
+    # tensorflow settings (GPU settings)
     gpu_options = tf.GPUOptions(allow_growth=True)
     sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
     init = tf.initializers.global_variables()
-
     sess.run(init)
 
-    # loss = Q_one.ForwardGradientGraph(name = "loss")
-    # opA, opB = Q_one.BackPropGradientDescent()
-
-    opA, opB = Q_one.ForwardGradientGraph()
-
+    # get loss value for visualize
+    loss = Q_one.ForwardGradientGraph(name = "loss")
+    # updating weights
+    opA, opB = Q_one.BackPropGradientDescent()
 
     indall = []
     lossall = []
-    i = 1
-    # for i in range(1000):
-    t1, t2 = sess.run([opA, opB], feed_dict = {Q_one.X: X_data})
-    print(t1.shape)
-    print(t2.shape)
-
-        # sess.run([opA, opB], feed_dict = {Q_one.X: X_data})
-        # test = sess.run(loss, feed_dict = {Q_one.X: X_data})
-        # print(test)
-        # indall.append(i)
-        # lossall.append(test)
-
-        # plt.cla()
-        # ax1.clear()
-        # ax1.plot(indall, lossall)
-        # fig.canvas.draw()
-        # plt.pause(0.1)        
+    for i in range(1000):
+        sess.run([opA, opB], feed_dict = {Q_one.X: X_data})
+        loss_value = sess.run(loss, feed_dict = {Q_one.X: X_data})
+        print(loss_value)
+        
+        indall.append(i)
+        lossall.append(test)
+        plt.cla()
+        ax1.clear()
+        ax1.plot(indall, lossall)
+        fig.canvas.draw()
+        plt.pause(0.1)        
 
 
     
