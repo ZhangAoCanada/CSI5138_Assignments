@@ -43,7 +43,7 @@ class QuestionOne:
 
     def WeightsBatch(self, weights):
         """
-        Function: copy the weights from shape (K, K) to shape (batch_size, K, K)
+        Function: copy the weights from shape (K, K) to shape (batch_size, K, K) 
         """
         return tf.ones([self.batch_size, 1., 1.]) * weights
 
@@ -195,7 +195,7 @@ if __name__ == "__main__":
         sess.run([opA, opB], feed_dict = {Q_one.X: X_data})
         loss_value = sess.run(loss, feed_dict = {Q_one.X: X_data})
         print(loss_value)
-        
+
         indall.append(i)
         lossall.append(test)
         plt.cla()
