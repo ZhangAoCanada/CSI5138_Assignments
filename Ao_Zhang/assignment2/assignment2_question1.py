@@ -3,30 +3,32 @@ CSI 5138: Assignment 2 ----- Question 1
 Student:            Ao   Zhang
 Student Number:     0300039680
 """
-##### for plotting through X11 #####
-# import matplotlib
-# matplotlib.use("tkagg")
-# ##### set specific gpu #####
-# import os
-# os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-# os.environ["CUDA_VISIBLE_DEVICES"]="1"
-##### other dependencies #####
-# import matplotlib.pyplot as plt
+#### for plotting through X11 #####
+import matplotlib
+matplotlib.use("tkagg")
+##### set specific gpu #####
+import os
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
+#### other dependencies #####
+import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
 from tqdm import tqdm
 from multiprocessing import Process
 
 class QuestionOne:
-    def __init__(self, K):
+    def __init__(self, N, K):
         """
         Args:
             k               ->              dimension of input vector X
+            N               ->              batch size of the input
         """ 
         self.K = K
+        self.batch_size = N
         self.X = tf.placeholder(tf.float32, shape = (None, self.K, 1))
-        self.A = tf.Variable(tf.glorot_uniform_initializer()((self.K, self.K)))
-        self.B = tf.Variable(tf.glorot_uniform_initializer()((self.K, self.K)))
+        self.A = tf.Variable(tf.glorot_uniform_initializer()((1, self.K, self.K)))
+        self.B = tf.Variable(tf.glorot_uniform_initializer()((1, self.K, self.K)))
         self.learning_rate = 0.01
 
     ###################################################################
@@ -42,9 +44,8 @@ class QuestionOne:
         """
         Function: \partial{grad(y)}{var1} = x; \partial{grad(y)}{var1} = A; 
         """
-        length = tf.shape(self.X)[0]
         return tf.transpose(var2, perm = [0, 2, 1]), \
-                tf.reshape(tf.tile(tf.transpose(var1), tf.constant([length])), [length, self.K, self.K])
+                tf.transpose(var1, perm = [0, 2, 1])
 
     def Sigmoid(self, var):
         """
@@ -69,8 +70,7 @@ class QuestionOne:
         Function: \partial{grad(y)}{var1} = var2 * var3
         """
         return tf.transpose(var2 * var3, perm = [0, 2, 1]), \
-                tf.transpose(tf.matmul(var1, var3), perm = [0, 2, 1]), \
-                tf.transpose(tf.matmul(var1, var2), perm = [0, 2, 1])
+                tf.matmul(var1, var3), tf.matmul(var1, var2)
 
     def EuclideanNorm(self, var):
         """
@@ -105,19 +105,21 @@ class QuestionOne:
         grad_omega_A, grad_omega_z = self.GradientLinear(self.A, z)
         grad_loss_omega = self.GradientEuclideanNorm(omega)
 
-        grad_A = tf.matmul(tf.matmul(grad_omega_z, grad_loss_omega) * grad_z_u * grad_u_y, grad_y_A) \
+        grad_A = tf.matmul(grad_omega_z, grad_loss_omega) * grad_z_u * grad_u_y
+
+        # grad_A = tf.matmul(tf.matmul(grad_omega_z, grad_loss_omega) * grad_z_u * grad_u_y, grad_y_A) \
                 # + tf.matmul(tf.matmul(grad_omega_z, grad_loss_omega), grad_z_A) \
                 # + tf.matmul(grad_loss_omega, grad_omega_A)
 
-        grad_A = grad_y_A * grad_u_y * grad_z_u * grad_omega_z * grad_loss_omega \
-                + grad_z_A * grad_omega_z * grad_loss_omega \
-                + grad_omega_A * grad_loss_omega
-        grad_B = grad_v_B * grad_z_v * grad_omega_z * grad_loss_omega
+        # grad_A = grad_y_A * grad_u_y * grad_z_u * grad_omega_z * grad_loss_omega \
+        #         + grad_z_A * grad_omega_z * grad_loss_omega \
+        #         + grad_omega_A * grad_loss_omega
+        # grad_B = grad_v_B * grad_z_v * grad_omega_z * grad_loss_omega
 
         if name == "loss":
             return loss
         elif name == "gradient":
-            return grad_omega_z, grad_loss_omega
+            return grad_A, grad_z_u
         else:
             raise ValueError("Namescope is wrong, please doublecheck the arguments")
     
@@ -158,13 +160,14 @@ class QuestionOne:
 
 
 if __name__ == "__main__":
+    N = 50
     K = 5
 
     # fig = plt.figure()
     # ax1 = fig.add_subplot(111)
 
-    Q_one =  QuestionOne(K)
-    X_data = np.random.randint(10, size = (100, K, 1))
+    Q_one =  QuestionOne(N, K)
+    X_data = np.random.randint(10, size = (N, K, 1))
 
     gpu_options = tf.GPUOptions(allow_growth=True)
     sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
