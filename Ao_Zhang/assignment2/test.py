@@ -1,10 +1,6 @@
-import tensorflow as tf
+# import tensorflow as tf
 
-a = tf.constant([[1], [2]])
 
-b = a.T
+a = [1] + [2, 3]
 
-sess = tf.Session()
-
-bbb = sess.run(b)
-print(bbb.shape)
+print(a)

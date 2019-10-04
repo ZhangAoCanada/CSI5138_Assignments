@@ -11,7 +11,7 @@ Student Number:     0300039680
 # os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 # os.environ["CUDA_VISIBLE_DEVICES"]="1"
 ##### other dependencies #####
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
 from tqdm import tqdm
@@ -25,8 +25,8 @@ class QuestionOne:
         """ 
         self.K = K
         self.X = tf.placeholder(tf.float32, shape = (None, self.K, 1))
-        self.A = tf.Variable(tf.glorot_uniform_initializer()((1, self.K, self.K)))
-        self.B = tf.Variable(tf.glorot_uniform_initializer()((1, self.K, self.K)))
+        self.A = tf.Variable(tf.glorot_uniform_initializer()((self.K, self.K)))
+        self.B = tf.Variable(tf.glorot_uniform_initializer()((self.K, self.K)))
         self.learning_rate = 0.01
 
     ###################################################################
@@ -42,7 +42,9 @@ class QuestionOne:
         """
         Function: \partial{grad(y)}{var1} = x; \partial{grad(y)}{var1} = A; 
         """
-        return tf.transpose(var2, perm = [0, 2, 1]), var1
+        length = tf.shape(self.X)[0]
+        return tf.transpose(var2, perm = [0, 2, 1]), \
+                tf.reshape(tf.tile(tf.transpose(var1), tf.constant([length])), [length, self.K, self.K])
 
     def Sigmoid(self, var):
         """
@@ -66,7 +68,9 @@ class QuestionOne:
         """
         Function: \partial{grad(y)}{var1} = var2 * var3
         """
-        return tf.transpose(var2 * var3, perm = [0, 2, 1]), tf.matmul(var1, var3), tf.matmul(var1, var2)
+        return tf.transpose(var2 * var3, perm = [0, 2, 1]), \
+                tf.transpose(tf.matmul(var1, var3), perm = [0, 2, 1]), \
+                tf.transpose(tf.matmul(var1, var2), perm = [0, 2, 1])
 
     def EuclideanNorm(self, var):
         """
@@ -101,6 +105,10 @@ class QuestionOne:
         grad_omega_A, grad_omega_z = self.GradientLinear(self.A, z)
         grad_loss_omega = self.GradientEuclideanNorm(omega)
 
+        grad_A = tf.matmul(tf.matmul(grad_omega_z, grad_loss_omega) * grad_z_u * grad_u_y, grad_y_A) \
+                # + tf.matmul(tf.matmul(grad_omega_z, grad_loss_omega), grad_z_A) \
+                # + tf.matmul(grad_loss_omega, grad_omega_A)
+
         grad_A = grad_y_A * grad_u_y * grad_z_u * grad_omega_z * grad_loss_omega \
                 + grad_z_A * grad_omega_z * grad_loss_omega \
                 + grad_omega_A * grad_loss_omega
@@ -109,7 +117,7 @@ class QuestionOne:
         if name == "loss":
             return loss
         elif name == "gradient":
-            return grad_A, grad_B
+            return grad_omega_z, grad_loss_omega
         else:
             raise ValueError("Namescope is wrong, please doublecheck the arguments")
     
@@ -152,8 +160,8 @@ class QuestionOne:
 if __name__ == "__main__":
     K = 5
 
-    fig = plt.figure()
-    ax1 = fig.add_subplot(111)
+    # fig = plt.figure()
+    # ax1 = fig.add_subplot(111)
 
     Q_one =  QuestionOne(K)
     X_data = np.random.randint(10, size = (100, K, 1))
@@ -164,23 +172,31 @@ if __name__ == "__main__":
 
     sess.run(init)
 
-    loss = Q_one.ForwardGradientGraph(name = "loss")
-    opA, opB = Q_one.BackPropGradientDescent()
+    # loss = Q_one.ForwardGradientGraph(name = "loss")
+    # opA, opB = Q_one.BackPropGradientDescent()
+
+    opA, opB = Q_one.ForwardGradientGraph()
+
 
     indall = []
     lossall = []
-    for i in range(1000):
-        sess.run([opA, opB], feed_dict = {Q_one.X: X_data})
-        test = sess.run(loss, feed_dict = {Q_one.X: X_data})
-        print(test)
-        indall.append(i)
-        lossall.append(test)
+    i = 1
+    # for i in range(1000):
+    t1, t2 = sess.run([opA, opB], feed_dict = {Q_one.X: X_data})
+    print(t1.shape)
+    print(t2.shape)
 
-        plt.cla()
-        ax1.clear()
-        ax1.plot(indall, lossall)
-        fig.canvas.draw()
-        plt.pause(0.1)        
+        # sess.run([opA, opB], feed_dict = {Q_one.X: X_data})
+        # test = sess.run(loss, feed_dict = {Q_one.X: X_data})
+        # print(test)
+        # indall.append(i)
+        # lossall.append(test)
+
+        # plt.cla()
+        # ax1.clear()
+        # ax1.plot(indall, lossall)
+        # fig.canvas.draw()
+        # plt.pause(0.1)        
 
 
     
