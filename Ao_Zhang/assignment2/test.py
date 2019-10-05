@@ -130,80 +130,82 @@ class CNN:
         self.X = tf.placeholder(tf.float32, shape = [None, self.w, self.h, 1])
         self.Y = tf.placeholder(tf.float32, shape = [None, self.output_size])
         self.input_channel = 1
-        self.n_feature_1 = 128
-        self.n_feature_2 = 256
-        self.n_feature_3 = 128
-        self.n_layers_in = 7 * 7 * 128
+        self.n_feature_1 = 32
+        self.n_feature_2 = 64
+        self.n_feature_3 = 64
+        self.n_layers_1 = 4 * 4 * 64
+        self.n_layers_2 = 64
         self.kernels = {
                         'k1' : tf.Variable(tf.glorot_uniform_initializer()([3, 3, self.input_channel, self.n_feature_1])),
-                        'k2' : tf.Variable(tf.glorot_uniform_initializer()([3, 3, self.n_feature_1, self.n_feature_2])),
-                        'k3' : tf.Variable(tf.glorot_uniform_initializer()([3, 3, self.n_feature_2, self.n_feature_3])),
-                        'k4' : [1, 2, 2, 1]
+                        'k2' : [1, 2, 2, 1],
+                        'k3' : tf.Variable(tf.glorot_uniform_initializer()([3, 3, self.n_feature_1, self.n_feature_2])),
+                        'k4' : [1, 2, 2, 1],
+                        'k5' : tf.Variable(tf.glorot_uniform_initializer()([3, 3, self.n_feature_2, self.n_feature_3])),
                         }
         self.padding = {
-                        'p1' : 'SAME',
+                        'p1' : 'VALID',
                         'p2' : 'SAME',
                         'p3' : 'VALID',
-                        'p4' : 'SAME'
+                        'p4' : 'SAME',
+                        'p5' : 'VALID',
                         }
         self.strides = {
                         's1' : [1, 1, 1, 1],
-                        's2' : [1, 1, 1, 1],
-                        's3' : [1, 2, 2, 1],
-                        's4' : [1, 2, 2, 1]
+                        's2' : [1, 2, 2, 1],
+                        's3' : [1, 1, 1, 1],
+                        's4' : [1, 2, 2, 1],
+                        's5' : [1, 1, 1, 1],
                         }
         self.weights = {
-                        'w5' : tf.Variable(tf.glorot_uniform_initializer()([self.n_layers_in, self.output_size]))
+                        'w6' : tf.Variable(tf.glorot_uniform_initializer()([self.n_layers_1, self.n_layers_2])),
+                        'w7' : tf.Variable(tf.glorot_uniform_initializer()([self.n_layers_2, self.output_size]))
                         }
         self.biases = {
-                        'b5' : tf.Variable(tf.glorot_uniform_initializer()((self.output_size,)))
+                        'b6' : tf.Variable(tf.glorot_uniform_initializer()((self.n_layers_2,))),
+                        'b7' : tf.Variable(tf.glorot_uniform_initializer()((self.output_size,)))
                         }
         self.global_step = tf.Variable(0, trainable=False)
         self.learning_rate_start = 0.001
         self.learning_rate = tf.train.exponential_decay(self.learning_rate_start, self.global_step, \
-                                                        100, 0.9, staircase=True)
+                                                        100, 0.96, staircase=True)
         self.dropout = dropout
         self.BN = BN
-        self.dropout_rate = 0.3
+        self.dropout_rate = 0.5
 
-    def SpecialPadding(self, input_layer):
-        top_left_pad = tf.constant([[0, 0], [1, 0], [1, 0], [0, 0]])
-        output = tf.pad(input_layer, top_left_pad, "CONSTANT")
-        return output
+    def ConvolutionalLayer(self, input, kernel, strides, padding):
+        layer = tf.nn.conv2d(input, kernel, strides = strides, padding = padding)
+        if self.BN:
+            layer = tf.layers.BatchNormalization()(layer)
+        # layer = tf.nn.leaky_relu(layer, alpha = 0.1)
+        layer = tf.nn.relu(layer)
+        return layer
+
+    def MaxPool(self, input_data, ksize, strides, padding):
+        layer = tf.nn.max_pool(input_data, ksize, strides = strides, padding = padding)
+        if self.BN:
+            layer = tf.layers.BatchNormalization()(layer)
+        return layer
+
+    def LastLayer(self, input_data, weights, biases):
+        input_data = tf.reshape(input_data, [tf.shape(input_data)[0], -1])
+        layer = tf.add(tf.matmul(input_data, weights), biases)
+        if self.BN:
+            layer = tf.layers.BatchNormalization()(layer)
+        if self.dropout:
+            layer = tf.nn.dropout(layer, self.dropout_rate)
+        layer = tf.nn.relu(layer)
+        return layer
 
     def ConvolutionNet(self):
-        layer_one = tf.nn.conv2d(self.X, self.kernels['k1'], strides = self.strides['s1'], padding = self.padding['p1'])
-        if self.BN:
-            layer_one = tf.layers.BatchNormalization()(layer_one)
-        layer_one = tf.nn.leaky_relu(layer_one, alpha = 0.1)
+        layer = self.ConvolutionalLayer(self.X, self.kernels['k1'], self.strides['s1'], self.padding['p1'])
+        layer = self.MaxPool(layer, self.kernels['k2'], self.strides['s2'], self.padding['p2'])
+        layer = self.ConvolutionalLayer(layer, self.kernels['k3'], self.strides['s3'], self.padding['p3'])
+        layer = self.MaxPool(layer, self.kernels['k4'], self.strides['s4'], self.padding['p4'])
+        layer = self.ConvolutionalLayer(layer, self.kernels['k5'], self.strides['s5'], self.padding['p5'])
 
-        layer_two = tf.nn.conv2d(layer_one, self.kernels['k2'], strides = self.strides['s2'], padding = self.padding['p2'])
-        if self.BN:
-            layer_two = tf.layers.BatchNormalization()(layer_two)
-        layer_two = tf.nn.leaky_relu(layer_two, alpha = 0.1)
-
-        layer_two = self.SpecialPadding(layer_two)
-        layer_three = tf.nn.conv2d(layer_two, self.kernels['k3'], strides = self.strides['s3'], padding = self.padding['p3'])
-        if self.BN:
-            layer_three = tf.layers.BatchNormalization()(layer_three)
-        layer_three = tf.nn.leaky_relu(layer_three, alpha = 0.1)
-
-        layer_four = tf.nn.max_pool2d(layer_three, self.kernels['k4'], strides = self.strides['s4'], padding = self.padding['p4'])
-        if self.BN:
-            layer_four = tf.layers.BatchNormalization()(layer_four)
-        layer_four = tf.nn.leaky_relu(layer_four, alpha = 0.1)
-
-        layer_four = tf.reshape(layer_four, [tf.shape(layer_four)[0], -1])
-
-        layer_five = tf.add(tf.matmul(layer_four, self.weights['w5']), self.biases['b5'])
-        if self.BN:
-            layer_five = tf.layers.BatchNormalization()(layer_five)
-        if self.dropout:
-            layer_five = tf.nn.dropout(layer_five, self.dropout_rate)
-        layer_five = tf.nn.relu(layer_five)
-
-        output = tf.nn.softmax(layer_five)
-        return output
+        layer = self.LastLayer(layer, self.weights['w6'], self.biases['b6'])
+        layer = self.LastLayer(layer, self.weights['w7'], self.biases['b7'])
+        return layer
 
     def LossFunction(self):
         pred = self.ConvolutionNet()

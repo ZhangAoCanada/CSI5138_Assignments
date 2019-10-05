@@ -276,7 +276,7 @@ if __name__ == "__main__":
     epoches = 20
     batch_size = 500
     mode = "CNN"
-    dropout = True
+    dropout = False
     BN = False
     Mnist_local_path = "mnist/"
 

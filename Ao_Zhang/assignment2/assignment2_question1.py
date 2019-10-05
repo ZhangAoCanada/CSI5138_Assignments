@@ -192,12 +192,11 @@ if __name__ == "__main__":
     indall = []
     lossall = []
     for i in range(1000):
-        sess.run([opA, opB], feed_dict = {Q_one.X: X_data})
-        loss_value = sess.run(loss, feed_dict = {Q_one.X: X_data})
-        print(loss_value)
+        _, _, loss_val = sess.run([opA, opB, loss], feed_dict = {Q_one.X: X_data})
+        print(loss_val)
 
         indall.append(i)
-        lossall.append(test)
+        lossall.append(loss_val)
         plt.cla()
         ax1.clear()
         ax1.plot(indall, lossall)
