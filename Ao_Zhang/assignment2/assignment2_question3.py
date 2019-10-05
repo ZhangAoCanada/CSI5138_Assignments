@@ -107,7 +107,7 @@ class MLP:
         return layer_three
 
     def LossFunction(self):
-        pred = self.Regression()
+        pred = self.MultiLayers()
         loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels = self.Y, logits = pred)
         loss = tf.reduce_mean(loss)
         return loss
@@ -271,13 +271,13 @@ def FolderName(mode, dropout, BN):
         original_name += '_BN'
     return original_name
 
-if __name__ == "__main__":
+def main(mode, dropout, BN):
     # basical settings
     epoches = 20
     batch_size = 500
-    mode = "CNN"
-    dropout = True
-    BN = False
+    mode = mode
+    dropout = dropout
+    BN = BN
     Mnist_local_path = "mnist/"
 
     # read Mnist
@@ -347,4 +347,36 @@ if __name__ == "__main__":
                 summary_a = sess.run(summary_accuracy)
                 test_writer.add_summary(summary_a, steps)
 
-        
+
+if __name__ == "__main__":
+    """
+    3 modes:
+        "softmax"
+        "MLP"  
+        "CNN"
+    """
+
+    for i in range(6):
+        if i == 0:
+            mode = "MLP"
+            dropout = True
+            BN = False
+            main(mode, dropout, BN)
+        elif i == 1:
+            mode = "CNN"
+            dropout = False
+            BN = True
+            main(mode, dropout, BN)
+        elif i == 2:
+            mode = "softmax"
+            dropout = False
+            BN = True
+            main(mode, dropout, BN)
+        elif i == 3:
+            mode = "MLP"
+            dropout = False
+            BN = True
+            main(mode, dropout, BN)
+        else:
+            break
+
