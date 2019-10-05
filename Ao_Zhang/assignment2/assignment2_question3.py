@@ -82,23 +82,26 @@ class MLP:
         self.dropout_rate = 0.3
 
     def MultiLayers(self):
-        layer_one = tf.nn.relu(tf.add(tf.matmul(self.X, self.weights['w1']), self.biases['b1']))
+        layer_one = tf.add(tf.matmul(self.X, self.weights['w1']), self.biases['b1'])
         if self.BN:
             layer_one = tf.layers.BatchNormalization()(layer_one)
         if self.dropout:
             layer_one = tf.nn.dropout(layer_one, self.dropout_rate)
+        layer_one = tf.nn.relu(layer_one)
 
-        layer_two = tf.nn.relu(tf.add(tf.matmul(layer_one, self.weights['w2']), self.biases['b2']))
+        layer_two = tf.add(tf.matmul(layer_one, self.weights['w2']), self.biases['b2'])
         if self.BN:
             layer_two = tf.layers.BatchNormalization()(layer_two)
         if self.dropout:
             layer_two = tf.nn.dropout(layer_two, self.dropout_rate)
+        layer_two = tf.nn.relu(layer_two)        
 
-        layer_three = tf.nn.relu(tf.add(tf.matmul(layer_two, self.weights['w3']), self.biases['b3']))
+        layer_three = tf.add(tf.matmul(layer_two, self.weights['w3']), self.biases['b3'])
         if self.BN:
             layer_three = tf.layers.BatchNormalization()(layer_three)
         if self.dropout:
             layer_three = tf.nn.dropout(layer_three, self.dropout_rate)
+        layer_three = tf.nn.relu(layer_three)        
 
         output = tf.nn.softmax(layer_three)
         return output
@@ -120,7 +123,104 @@ class MLP:
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, dtype = tf.float32))
         return accuracy
 
-# class CNN:
+class CNN:
+    def __init__(self, input_size, output_size, dropout = False, BN = False):
+        self.w, self.h = input_size
+        self.output_size = output_size
+        self.X = tf.placeholder(tf.float32, shape = [None, self.w, self.h, 1])
+        self.Y = tf.placeholder(tf.float32, shape = [None, self.output_size])
+        self.input_channel = 1
+        self.n_feature_1 = 128
+        self.n_feature_2 = 256
+        self.n_feature_3 = 128
+        self.n_layers_in = 7 * 7 * 128
+        self.kernels = {
+                        'k1' : tf.Variable(tf.glorot_uniform_initializer()([3, 3, self.input_channel, self.n_feature_1])),
+                        'k2' : tf.Variable(tf.glorot_uniform_initializer()([3, 3, self.n_feature_1, self.n_feature_2])),
+                        'k3' : tf.Variable(tf.glorot_uniform_initializer()([3, 3, self.n_feature_2, self.n_feature_3])),
+                        'k4' : [1, 2, 2, 1]
+                        }
+        self.padding = {
+                        'p1' : 'SAME',
+                        'p2' : 'SAME',
+                        'p3' : 'VALID',
+                        'p4' : 'SAME'
+                        }
+        self.strides = {
+                        's1' : [1, 1, 1, 1],
+                        's2' : [1, 1, 1, 1],
+                        's3' : [1, 2, 2, 1],
+                        's4' : [1, 2, 2, 1]
+                        }
+        self.weights = {
+                        'w5' : tf.Variable(tf.glorot_uniform_initializer()([self.n_layers_in, self.output_size]))
+                        }
+        self.biases = {
+                        'b5' : tf.Variable(tf.glorot_uniform_initializer()((self.output_size,)))
+                        }
+        self.global_step = tf.Variable(0, trainable=False)
+        self.learning_rate_start = 0.001
+        self.learning_rate = tf.train.exponential_decay(self.learning_rate_start, self.global_step, \
+                                                        100, 0.9, staircase=True)
+        self.dropout = dropout
+        self.BN = BN
+        self.dropout_rate = 0.3
+
+    def SpecialPadding(self, input_layer):
+        top_left_pad = tf.constant([[0, 0], [1, 0], [1, 0], [0, 0]])
+        output = tf.pad(input_layer, top_left_pad, "CONSTANT")
+        return output
+
+    def ConvolutionNet(self):
+        layer_one = tf.nn.conv2d(self.X, self.kernels['k1'], strides = self.strides['s1'], padding = self.padding['p1'])
+        if self.BN:
+            layer_one = tf.layers.BatchNormalization()(layer_one)
+        layer_one = tf.nn.leaky_relu(layer_one, alpha = 0.1)
+
+        layer_two = tf.nn.conv2d(layer_one, self.kernels['k2'], strides = self.strides['s2'], padding = self.padding['p2'])
+        if self.BN:
+            layer_two = tf.layers.BatchNormalization()(layer_two)
+        layer_two = tf.nn.leaky_relu(layer_two, alpha = 0.1)
+
+        layer_two = self.SpecialPadding(layer_two)
+        layer_three = tf.nn.conv2d(layer_two, self.kernels['k3'], strides = self.strides['s3'], padding = self.padding['p3'])
+        if self.BN:
+            layer_three = tf.layers.BatchNormalization()(layer_three)
+        layer_three = tf.nn.leaky_relu(layer_three, alpha = 0.1)
+
+        layer_four = tf.nn.max_pool2d(layer_three, self.kernels['k4'], strides = self.strides['s4'], padding = self.padding['p4'])
+        if self.BN:
+            layer_four = tf.layers.BatchNormalization()(layer_four)
+        layer_four = tf.nn.leaky_relu(layer_four, alpha = 0.1)
+
+        layer_four = tf.reshape(layer_four, [tf.shape(layer_four)[0], -1])
+
+        layer_five = tf.add(tf.matmul(layer_four, self.weights['w5']), self.biases['b5'])
+        if self.BN:
+            layer_five = tf.layers.BatchNormalization()(layer_five)
+        if self.dropout:
+            layer_five = tf.nn.dropout(layer_five, self.dropout_rate)
+        layer_five = tf.nn.relu(layer_five)
+
+        output = tf.nn.softmax(layer_five)
+        return output
+
+    def LossFunction(self):
+        pred = self.ConvolutionNet()
+        loss = tf.reduce_mean(tf.square(tf.add(pred, - self.Y)))
+        return loss
+
+    def TrainModel(self):
+        loss = self.LossFunction()
+        optimizer = tf.train.AdamOptimizer(learning_rate = self.learning_rate)
+        learning_operation = optimizer.minimize(loss, global_step = self.global_step)
+        return learning_operation
+
+    def Accuracy(self):
+        pred = self.ConvolutionNet()
+        correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(self.Y, 1))
+        accuracy = tf.reduce_mean(tf.cast(correct_prediction, dtype = tf.float32))
+        return accuracy
 
 
 def TranslateLables(labels, num_class):
@@ -144,12 +244,16 @@ def GetMnistData(data_path, mode):
     X_test = X_test.astype(np.float32)
 
     if mode == "CNN":
-        X_train = X_train.reshape((-1, 28, 28))
-        X_test = X_test.reshape((-1, 28, 28))
+        X_train = np.expand_dims(X_train.reshape((-1, 28, 28)), axis = -1)
+        X_test = np.expand_dims(X_test.reshape((-1, 28, 28)), axis = -1)
 
     all_classes = np.unique(Y_train_original)
-    num_input = X_train.shape[1]
     num_class = len(all_classes)
+
+    if mode == "CNN":
+        num_input = (28, 28)
+    else:
+        num_input = X_train.shape[1]    
 
     Y_train = TranslateLables(Y_train_original, num_class)
     Y_test = TranslateLables(Y_test_original, num_class)
@@ -167,8 +271,8 @@ def FolderName(mode, dropout, BN):
 if __name__ == "__main__":
     # basical settings
     epoches = 50
-    batch_size = 500
-    mode = "MLP"
+    batch_size = 200
+    mode = "CNN"
     dropout = False
     BN = True
     Mnist_local_path = "mnist/"
@@ -178,13 +282,14 @@ if __name__ == "__main__":
 
     # training parameter
     hm_batches_train = len(X_train) // batch_size
+    hm_batches_test = len(X_test) // batch_size
 
     if mode == "softmax":
         model = SoftmaxRegression(input_size, output_size, dropout, BN)
     elif mode == "MLP":
         model = MLP(input_size, output_size, dropout, BN)
-    # elif mode == "CNN":
-
+    elif mode == "CNN":
+        model = CNN(input_size, output_size, dropout, BN)
     else:
         raise ValueError("Wrong Mode Input, please doublecheck it.")
 
@@ -210,6 +315,7 @@ if __name__ == "__main__":
         folder_name = FolderName(mode, dropout, BN)
         train_writer = tf.summary.FileWriter(summaries_train + folder_name, sess.graph)
         test_writer = tf.summary.FileWriter(summaries_test + folder_name, sess.graph)
+        summary_acc = tf.Summary()
         sess.run(init)
         for each_epoch in tqdm(range(epoches)):
             for each_batch_train in range(hm_batches_train):
@@ -222,9 +328,16 @@ if __name__ == "__main__":
 
                 train_writer.add_summary(summary_l, steps)
 
-                summary_a = sess.run(summary_accuracy, feed_dict = {model.X : X_test, \
-                                                                    model.Y : Y_test})
+                accuracies = []
+                for each_batch_test in range(hm_batches_test):
+                    X_train_batch = X_train[each_batch_test*batch_size: (each_batch_test+1)*batch_size]
+                    Y_train_batch = Y_train[each_batch_test*batch_size: (each_batch_test+1)*batch_size]
+                    acc = sess.run(accuracy, feed_dict = {model.X : X_train_batch, \
+                                                                        model.Y : Y_train_batch})
+                    accuracies.append(acc)
+                acc_val = np.mean(accuracies)
+                summary_acc.value.add(tag=acc_graph_name, simple_value=acc_val)
 
-                test_writer.add_summary(summary_a, steps)
+                test_writer.add_summary(summary_acc, steps)
 
         
