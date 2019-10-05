@@ -271,7 +271,7 @@ def FolderName(mode, dropout, BN):
 if __name__ == "__main__":
     # basical settings
     epoches = 50
-    batch_size = 200
+    batch_size = 500
     mode = "CNN"
     dropout = False
     BN = True
