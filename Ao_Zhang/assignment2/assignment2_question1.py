@@ -39,7 +39,7 @@ class QuestionOne:
         self.A_batch = self.WeightsBatch(self.A)
         self.B_batch = self.WeightsBatch(self.B)
         # define a learning rate
-        self.learning_rate = 0.01
+        self.learning_rate = 0.001
 
     def WeightsBatch(self, weights):
         """
@@ -101,7 +101,7 @@ class QuestionOne:
         return 2 * var
 
     ###################################################################
-    # calculate the forward graph, gradient graph and dual gradient
+    ## calculate the forward graph, gradient graph and dual gradient ##
     ###################################################################
     def ForwardGradientGraph(self, name = "gradient"):
         """
@@ -159,7 +159,7 @@ class QuestionOne:
 
 
 ###################################################################
-# random test, feel free to tune all those parameters
+####### random test, feel free to tune all those parameters #######
 ###################################################################
 if __name__ == "__main__":
 
@@ -191,17 +191,21 @@ if __name__ == "__main__":
 
     indall = []
     lossall = []
-    for i in range(1000):
+    for i in range(100):
         _, _, loss_val = sess.run([opA, opB, loss], feed_dict = {Q_one.X: X_data})
         print(loss_val)
 
         indall.append(i)
         lossall.append(loss_val)
-        plt.cla()
-        ax1.clear()
-        ax1.plot(indall, lossall)
-        fig.canvas.draw()
-        plt.pause(0.1)        
+
+
+    ax1.plot(indall, lossall)
+    ax1.grid()
+    ax1.set_title("value of loss function in 100 training steps")
+    ax1.set_xlabel("training steps")
+    ax1.set_ylabel("loss value")
+    plt.savefig("assignment1_question1.png")
+    plt.show()     
 
 
     
