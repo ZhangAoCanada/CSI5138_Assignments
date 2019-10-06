@@ -34,7 +34,7 @@ class SoftmaxRegression:
                                                         100, 0.96, staircase=True)
         self.dropout = dropout
         self.BN = BN
-        self.dropout_rate = 0.5
+        self.dropout_rate = 0.1
 
     def Regression(self):
         """
@@ -235,12 +235,12 @@ class CNN:
         self.BN = BN
         self.dropout_rate = 0.5
 
-    def ConvolutionalLayer(self, input, kernel, strides, padding):
+    def ConvolutionalLayer(self, input_data, kernel, strides, padding):
         """
         Function:
             Define convolutional layer.
         """
-        layer = tf.nn.conv2d(input, kernel, strides = strides, padding = padding)
+        layer = tf.nn.conv2d(input_data, kernel, strides = strides, padding = padding)
         if self.BN:
             layer = tf.layers.BatchNormalization()(layer)
         layer = tf.nn.relu(layer)
@@ -252,8 +252,8 @@ class CNN:
             Define maxpool layer.
         """
         layer = tf.nn.max_pool(input_data, ksize, strides = strides, padding = padding)
-        if self.BN:
-            layer = tf.layers.BatchNormalization()(layer)
+        # if self.BN:
+        #     layer = tf.layers.BatchNormalization()(layer)
         return layer
 
     def LastLayer(self, input_data, weights, biases, if_relu = True):
