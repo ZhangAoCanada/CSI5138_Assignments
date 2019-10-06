@@ -33,8 +33,8 @@ class SoftmaxRegression:
         layer = tf.add(tf.matmul(self.X, self.weights), self.biases)
         if self.BN:
             layer = tf.layers.BatchNormalization()(layer)
-        if self.dropout:
-            layer = tf.nn.dropout(layer, self.dropout_rate)
+        # if self.dropout:
+            # layer = tf.nn.dropout(layer, self.dropout_rate)
 
         return layer
 
@@ -101,8 +101,8 @@ class MLP:
         layer_three = tf.add(tf.matmul(layer_two, self.weights['w3']), self.biases['b3'])
         if self.BN:
             layer_three = tf.layers.BatchNormalization()(layer_three)
-        if self.dropout:
-            layer_three = tf.nn.dropout(layer_three, self.dropout_rate)        
+        # if self.dropout:
+            # layer_three = tf.nn.dropout(layer_three, self.dropout_rate)        
 
         return layer_three
 
@@ -176,6 +176,8 @@ class CNN:
         layer = tf.nn.conv2d(input, kernel, strides = strides, padding = padding)
         if self.BN:
             layer = tf.layers.BatchNormalization()(layer)
+        if self.dropout:
+            layer = tf.nn.dropout(layer, self.dropout_rate)
         layer = tf.nn.relu(layer)
         return layer
 
@@ -183,6 +185,8 @@ class CNN:
         layer = tf.nn.max_pool(input_data, ksize, strides = strides, padding = padding)
         if self.BN:
             layer = tf.layers.BatchNormalization()(layer)
+        if self.dropout:
+            layer = tf.nn.dropout(layer, self.dropout_rate)
         return layer
 
     def LastLayer(self, input_data, weights, biases, if_relu = True):
@@ -190,8 +194,8 @@ class CNN:
         layer = tf.add(tf.matmul(input_data, weights), biases)
         if self.BN:
             layer = tf.layers.BatchNormalization()(layer)
-        if self.dropout:
-            layer = tf.nn.dropout(layer, self.dropout_rate)
+        # if self.dropout:
+            # layer = tf.nn.dropout(layer, self.dropout_rate)
         if if_relu:
             layer = tf.nn.relu(layer)
         return layer
@@ -305,7 +309,7 @@ def main(mode, dropout, BN):
     summary_loss = tf.summary.scalar(loss_graph_name, loss)
     streaming_accuracy, streaming_accuracy_update = tf.contrib.metrics.streaming_mean(accuracy)
     summary_accuracy = tf.summary.scalar(acc_graph_name, streaming_accuracy)
-    summary_accuracy_straight = tf.summary.scalar(acc_graph_name, accuracy)
+    # summary_accuracy_straight = tf.summary.scalar(acc_graph_name, accuracy)
 
     train = model.TrainModel()
 
@@ -364,18 +368,13 @@ if __name__ == "__main__":
             main(mode, dropout, BN)
         elif i == 1:
             mode = "CNN"
-            dropout = False
-            BN = True
+            dropout = True
+            BN = False
             main(mode, dropout, BN)
         elif i == 2:
             mode = "softmax"
-            dropout = False
-            BN = True
-            main(mode, dropout, BN)
-        elif i == 3:
-            mode = "MLP"
-            dropout = False
-            BN = True
+            dropout = True
+            BN = False
             main(mode, dropout, BN)
         else:
             break
