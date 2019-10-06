@@ -34,7 +34,7 @@ class SoftmaxRegression:
                                                         100, 0.96, staircase=True)
         self.dropout = dropout
         self.BN = BN
-        self.dropout_rate = 0.3
+        self.dropout_rate = 0.5
 
     def Regression(self):
         """
@@ -64,10 +64,10 @@ class SoftmaxRegression:
     def TrainModel(self):
         """
         Function:
-            Define optimization method as tf.train.GradientDescentOptimizer()
+            Define optimization method as tf.train.AdamOptimizer()
         """
         loss = self.LossFunction()
-        optimizer = tf.train.GradientDescentOptimizer(learning_rate = self.learning_rate)
+        optimizer = tf.train.AdamOptimizer(learning_rate = self.learning_rate)
         learning_operation = optimizer.minimize(loss, global_step = self.global_step)
         return learning_operation
 
@@ -116,7 +116,7 @@ class MLP:
                                                         100, 0.96, staircase=True)
         self.dropout = dropout
         self.BN = BN
-        self.dropout_rate = 0.3
+        self.dropout_rate = 0.5
 
     def MultiLayers(self):
         """
@@ -127,24 +127,19 @@ class MLP:
         """
         layer_one = tf.add(tf.matmul(self.X, self.weights['w1']), self.biases['b1'])
         if self.BN:
-            # layer_one = tf.layers.BatchNormalization()(layer_one)
-            layer_one = tf.layers.batch_normalization(layer_one, training = True)
+            layer_one = tf.layers.BatchNormalization()(layer_one)
         if self.dropout:
             layer_one = tf.layers.dropout(layer_one, self.dropout_rate)
         layer_one = tf.nn.relu(layer_one)
 
         layer_two = tf.add(tf.matmul(layer_one, self.weights['w2']), self.biases['b2'])
         if self.BN:
-            # layer_two = tf.layers.BatchNormalization()(layer_two)
-            layer_two = tf.layers.batch_normalization(layer_two, training = True)
+            layer_two = tf.layers.BatchNormalization()(layer_two)
         if self.dropout:
             layer_two = tf.layers.dropout(layer_two, self.dropout_rate)
         layer_two = tf.nn.relu(layer_two)        
 
         layer_three = tf.add(tf.matmul(layer_two, self.weights['w3']), self.biases['b3'])
-        if self.BN:
-            # layer_three = tf.layers.BatchNormalization()(layer_three)
-            layer_three = tf.layers.batch_normalization(layer_three, training = True)
         if self.dropout:
             layer_three = tf.layers.dropout(layer_three, self.dropout_rate)        
 
@@ -163,10 +158,10 @@ class MLP:
     def TrainModel(self):
         """
         Function:
-            Define optimization method as tf.train.GradientDescentOptimizer()
+            Define optimization method as tf.train.AdamOptimizer()
         """
         loss = self.LossFunction()
-        optimizer = tf.train.GradientDescentOptimizer(learning_rate = self.learning_rate)
+        optimizer = tf.train.AdamOptimizer(learning_rate = self.learning_rate)
         learning_operation = optimizer.minimize(loss, global_step = self.global_step)
         return learning_operation
 
@@ -238,7 +233,7 @@ class CNN:
                                                         100, 0.96, staircase=True)
         self.dropout = dropout
         self.BN = BN
-        self.dropout_rate = 0.3
+        self.dropout_rate = 0.5
 
     def ConvolutionalLayer(self, input, kernel, strides, padding):
         """
@@ -268,8 +263,10 @@ class CNN:
         """
         input_data = tf.reshape(input_data, [tf.shape(input_data)[0], -1])
         layer = tf.add(tf.matmul(input_data, weights), biases)
-        if self.BN:
-            layer = tf.layers.BatchNormalization()(layer)
+        # if self.BN:
+        #     layer = tf.layers.BatchNormalization()(layer)
+        if self.dropout:
+            layer = tf.layers.dropout(layer, self.dropout_rate)
         if if_relu:
             layer = tf.nn.relu(layer)
         return layer
@@ -304,10 +301,10 @@ class CNN:
     def TrainModel(self):
         """
         Function:
-            Define optimization method as tf.train.GradientDescentOptimizer()
+            Define optimization method as tf.train.AdamOptimizer()
         """
         loss = self.LossFunction()
-        optimizer = tf.train.GradientDescentOptimizer(learning_rate = self.learning_rate)
+        optimizer = tf.train.AdamOptimizer(learning_rate = self.learning_rate)
         learning_operation = optimizer.minimize(loss, global_step = self.global_step)
         return learning_operation
 
@@ -405,16 +402,13 @@ if __name__ == "__main__":
         "CNN"
     """
 
-    mode = "MLP"
+    mode = "CNN"
     dropout = False
-    BN = True
+    BN = False
 
     # basical settings
-    epoches = 30
+    epoches = 20
     batch_size = 500
-    # mode = mode
-    # dropout = dropout
-    # BN = BN
     Mnist_local_path = "mnist/"
 
     # read Mnist
