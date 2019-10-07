@@ -5,11 +5,6 @@ import math
 from scipy.misc import derivative
 import matplotlib.pyplot as plt
 
-def get_x(N, dim_x):
-    np.random.seed(0)
-    x = np.random.randint(10, size=(N, dim_x, 1))
-    x= np.array(x)
-    return x
 
 def sigmoid(z):
     return 1.0/(1.0+np.exp(z))
@@ -78,6 +73,12 @@ def sum(L):
     return temp
 
 
+def get_x(N, dim_x):
+    np.random.seed(0)
+    x = np.random.randint(10, size=(N, dim_x, 1))
+    x= np.array(x)
+    return x
+
 def find_min(Number, dim):
     loss_list = []
     loop = []
@@ -105,7 +106,6 @@ def find_min(Number, dim):
         iteration += 1
 
     return loss, loss_list, loop
-
 
 
 loss, loss_list, loop= find_min(10, 5)
