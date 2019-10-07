@@ -140,8 +140,8 @@ class MLP:
         layer_two = tf.nn.relu(layer_two)        
 
         layer_three = tf.add(tf.matmul(layer_two, self.weights['w3']), self.biases['b3'])
-        if self.dropout:
-            layer_three = tf.layers.dropout(layer_three, self.dropout_rate)        
+        # if self.dropout:
+        #     layer_three = tf.layers.dropout(layer_three, self.dropout_rate)        
 
         return layer_three
 
@@ -252,8 +252,6 @@ class CNN:
             Define maxpool layer.
         """
         layer = tf.nn.max_pool(input_data, ksize, strides = strides, padding = padding)
-        # if self.BN:
-        #     layer = tf.layers.BatchNormalization()(layer)
         return layer
 
     def LastLayer(self, input_data, weights, biases, if_relu = True):
@@ -263,8 +261,6 @@ class CNN:
         """
         input_data = tf.reshape(input_data, [tf.shape(input_data)[0], -1])
         layer = tf.add(tf.matmul(input_data, weights), biases)
-        # if self.BN:
-        #     layer = tf.layers.BatchNormalization()(layer)
         if self.dropout:
             layer = tf.layers.dropout(layer, self.dropout_rate)
         if if_relu:
@@ -402,8 +398,8 @@ if __name__ == "__main__":
         "CNN"
     """
 
-    mode = "CNN"
-    dropout = False
+    mode = "softmax"
+    dropout = True
     BN = False
 
     # basical settings
