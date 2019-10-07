@@ -34,7 +34,7 @@ class SoftmaxRegression:
                                                         100, 0.96, staircase=True)
         self.dropout = dropout
         self.BN = BN
-        self.dropout_rate = 0.1
+        self.dropout_rate = 0.5
 
     def Regression(self):
         """
