@@ -153,7 +153,7 @@ class AssignmentRNNModel:
         self.learning_rate_start = 0.001
         self.global_step = tf.Variable(0, trainable=False)
         self.learning_rate = tf.train.exponential_decay(self.learning_rate_start, self.global_step, \
-                                                        100, 0.96, staircase=True)
+                                                        50, 0.96, staircase=True)
         self.X_ids = tf.placeholder(tf.int32, [None, self.length_limit])
         self.Y = tf.placeholder(tf.float32, [None, 2])
         self.X = tf.nn.embedding_lookup(self.word_vector, self.X_ids)
@@ -222,7 +222,7 @@ def main(mode, state_size):
     length_limit = 500
 
     batch_size = 500
-    epoches = 100
+    epoches = 200
     # state_size_requirements = [20, 50, 100, 200, 500]
     # state_size = state_size_requirements[1]
     # mode = "vanilla"
@@ -304,7 +304,7 @@ if __name__ == "__main__":
     """
     2 modes: "vanilla", "lstm"
     """
-    mode = "vanilla"
+    mode = "lstm"
     state_size_requirements = [20, 50, 100, 200, 500]
     state_size = state_size_requirements[1]
     main(mode, state_size)
