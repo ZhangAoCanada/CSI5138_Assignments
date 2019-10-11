@@ -1,3 +1,8 @@
+"""
+CSI 5138: Assignment 2 ----- Question 3
+Student:            Ao   Zhang
+Student Number:     0300039680
+"""
 import re
 import numpy as np
 from glob import glob
