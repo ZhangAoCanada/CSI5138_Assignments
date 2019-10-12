@@ -1,3 +1,16 @@
+"""
+-----------------------------------------------------------------
+CSI 5138: Assignment 3
+Student:            Ao   Zhang
+Student Number:     0300039680
+
+-----------------------------------------------------------------
+Result plotting code.
+
+The code is for reading the result saved from tensorboard, and
+re-orgnizing the plots.
+-----------------------------------------------------------------
+"""
 import csv
 import matplotlib.pyplot as plt
 import numpy as np

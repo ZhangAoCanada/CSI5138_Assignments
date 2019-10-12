@@ -1,7 +1,16 @@
 """
-CSI 5138: Assignment 2 ----- Question 3
+-----------------------------------------------------------------
+CSI 5138: Assignment 3
 Student:            Ao   Zhang
 Student Number:     0300039680
+
+-----------------------------------------------------------------
+Main code for the assignment 3.
+
+The code is for reading the vocab and wordvector, transferring 
+dataset into np.array, building Vanillar RNN and LSTM, training
+them.
+-----------------------------------------------------------------
 """
 ##### set specific gpu #####
 import os

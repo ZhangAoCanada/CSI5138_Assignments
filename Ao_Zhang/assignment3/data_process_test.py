@@ -1,16 +1,18 @@
 """
-CSI 5138: Assignment 2 ----- Question 3
+-----------------------------------------------------------------
+CSI 5138: Assignment 3
 Student:            Ao   Zhang
 Student Number:     0300039680
+
+-----------------------------------------------------------------
+This code is for transferring all .txt file in the dataset into
+one .txt file.
+
+After that, feed the combined file into Glove to get the vocabulary
+and the word vectors. Finally, all vocabulary and word vectors
+are saved in the current directory. (vocab.txt, vectors.txt)
+-----------------------------------------------------------------
 """
-#####################################################################
-# This code is for transferring all .txt file in the dataset into
-# one .txt file.
-#
-# After that, feed the combined file into Glove to get the vocabulary
-# and the word vectors. Finally, all vocabulary and word vectors
-# are saved in the current directory. (vocab.txt, vectors.txt)
-#####################################################################
 import re
 import numpy as np
 from glob import glob
