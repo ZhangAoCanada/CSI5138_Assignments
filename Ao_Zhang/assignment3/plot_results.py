@@ -161,7 +161,14 @@ lstm_200_loss = ReadCsv(lstm_200_loss_file)
 lstm_500_loss = ReadCsv(lstm_500_loss_file)
 
 
-mode = 5
+mode = 0
+
+# print all final accuracy values
+if mode == 0:
+    vanilla_acc_results = np.array([vanilla_20_acc[1][-1], vanilla_50_acc[1][-1], vanilla_100_acc[1][-1], vanilla_200_acc[1][-1], vanilla_500_acc[1][-1]])
+    lstm_acc_results = np.array([lstm_20_acc[1][-1], lstm_50_acc[1][-1], lstm_100_acc[1][-1], lstm_200_acc[1][-1], lstm_500_acc[1][-1]])
+    print(vanilla_acc_results)
+    print(lstm_acc_results)
 
 # plotting under different modes
 if mode == 1:
