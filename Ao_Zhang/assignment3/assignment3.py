@@ -23,8 +23,8 @@ class WordVectorAndList:
         self.vocab_file = vocab_file
         self.vector_file = vector_file
         self.vocab_list = self.VocabList(self.vocab_file)
-        if os.path.exists("wordvector.npy"):
-            self.word_vector = np.load("wordvector.npy")
+        if os.path.exists("dataset_numpy/wordvector.npy"):
+            self.word_vector = np.load("dataset_numpy/wordvector.npy")
         else:
             self.word_vector = self.WordVector(self.vector_file, self.vocab_list)
 
@@ -54,7 +54,7 @@ class WordVectorAndList:
                     word_vector.append(float(characters[i]))
                 word_vector = np.array(word_vector)
                 output_array[word_ind] = word_vector
-        np.save("wordvector.npy", output_array)
+        np.save("dataset_numpy/wordvector.npy", output_array)
         return output_array
 
 #################################################################################
@@ -124,24 +124,26 @@ def CreatDataSet(pos_data, neg_data, name_prefix):
     np.random.shuffle(indexes)
     dataset = all_dataset[indexes]
     labels = all_labels[indexes]
-    np.save(name_prefix + "_dataset.npy", dataset)
-    np.save(name_prefix + "_labels.npy", labels)
+    np.save("dataset_numpy/" + name_prefix + "_dataset.npy", dataset)
+    np.save("dataset_numpy/" +  name_prefix + "_labels.npy", labels)
     return dataset, labels
 
 def GetTrainAndTestSets(word_list, train_pos_files, train_neg_files, test_pos_files, 
                         test_neg_files, length_limit):
-    existance = os.path.exists("training_dataset.npy") and os.path.exists("training_labels.npy") \
-                and os.path.exists("test_dataset.npy") and os.path.exists("test_labels.npy")
+    existance = os.path.exists("dataset_numpy/training_dataset.npy") and \
+                os.path.exists("dataset_numpy/training_labels.npy") and \
+                os.path.exists("dataset_numpy/test_dataset.npy") and \
+                os.path.exists("dataset_numpy/test_labels.npy")
     if not existance:
         train_pos_set, train_neg_set, test_pos_set, test_neg_set = GetAllData(word_list, train_pos_files, \
                                     train_neg_files, test_pos_files, test_neg_files, length_limit)
         training_set, training_label = CreatDataSet(train_pos_set, train_neg_set, name_prefix = "training")
         test_set, test_label = CreatDataSet(test_pos_set, test_neg_set, name_prefix = "test")
     else:
-        training_set = np.load("training_dataset.npy")
-        training_label = np.load("training_labels.npy")
-        test_set = np.load("test_dataset.npy")
-        test_label = np.load("test_labels.npy")
+        training_set = np.load("dataset_numpy/training_dataset.npy")
+        training_label = np.load("dataset_numpy/training_labels.npy")
+        test_set = np.load("dataset_numpy/test_dataset.npy")
+        test_label = np.load("dataset_numpy/test_labels.npy")
     return training_set, training_label, test_set, test_label
 
 #################################################################################
@@ -224,10 +226,7 @@ def main(mode, state_size):
 
     batch_size = 1000
     epoches = 150
-    # state_size_requirements = [20, 50, 100, 200, 500]
-    # state_size = state_size_requirements[1]
-    # mode = "vanilla"
-
+    
     words_dict_creater = WordVectorAndList(vocab_file, vector_file)
     word_list = words_dict_creater.vocab_list
     word_vector = words_dict_creater.word_vector
@@ -243,16 +242,8 @@ def main(mode, state_size):
     print([num_train_batch, num_test_batch])
 
     #################################################################################
-    # tf.reset_default_graph()
 
     model = AssignmentRNNModel(length_limit, word_vector, state_size, name = mode)
-
-    # if mode == "vanilla":
-    #     model = AssignmentRNNModel(length_limit, word_vector, state_size, name = "vanilla")
-    # elif mode == "lstm":
-    #     model = AssignmentRNNModel(length_limit, word_vector, state_size, name = "lstm")
-    # else:
-    #     raise ValueError("wrong input name, please choose one from either vanilla or lstm")
 
     loss = model.LossFunction()
     accuracy = model.Accuracy()
@@ -276,7 +267,7 @@ def main(mode, state_size):
         folder_name = mode + "_" + str(state_size)
         train_writer = tf.summary.FileWriter(summaries_train + folder_name, sess.graph)
         test_writer = tf.summary.FileWriter(summaries_test + folder_name, sess.graph)
-        # summary_acc = tf.Summary()
+        
         sess.run(init)
         for epoch_id in tqdm(range(epoches)):
             for train_batch_id in range(num_train_batch):
@@ -307,7 +298,7 @@ if __name__ == "__main__":
     """
     mode = "vanilla"
     state_size_requirements = [20, 50, 100, 200, 500]
-    state_size = state_size_requirements[3]
+    state_size = state_size_requirements[4]
     main(mode, state_size)
 
 
