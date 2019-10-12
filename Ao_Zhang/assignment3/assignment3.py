@@ -54,6 +54,8 @@ class WordVectorAndList:
                     word_vector.append(float(characters[i]))
                 word_vector = np.array(word_vector)
                 output_array[word_ind] = word_vector
+        if not os.path.isdir("dataset_numpy"):
+            os.mkdir("dataset_numpy")
         np.save("dataset_numpy/wordvector.npy", output_array)
         return output_array
 
@@ -226,7 +228,7 @@ def main(mode, state_size):
 
     batch_size = 1000
     epoches = 150
-    
+
     words_dict_creater = WordVectorAndList(vocab_file, vector_file)
     word_list = words_dict_creater.vocab_list
     word_vector = words_dict_creater.word_vector

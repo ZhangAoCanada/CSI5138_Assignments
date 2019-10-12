@@ -83,7 +83,7 @@ def PlotAndSave(v1, v2, v3, xlim, ylim, label1, label2, label3,
         ax1.set_xlim(xlim)
         ax1.set_ylim(ylim)
         ax1.set_title(title)
-        ax1.set_xlabel(xlabel + "(unit: k steps)")
+        ax1.set_xlabel(xlabel + "(unit: steps)")
         ax1.set_ylabel(ylabel)
         ax1.legend()
         ax1.grid()
@@ -111,7 +111,7 @@ def PlotAndSave(v1, v2, v3, xlim, ylim, label1, label2, label3,
         ax1.set_xlim(xlim)
         ax1.set_ylim(ylim)
         ax1.set_title(title)
-        ax1.set_xlabel(xlabel + "(unit: k steps)")
+        ax1.set_xlabel(xlabel + "(unit: steps)")
         ax1.set_ylabel(ylabel)
         ax1.legend()
         ax1.grid()
@@ -154,7 +154,7 @@ softmax_los = ReadCsv(softmax_loss)
 softmax_BN_los = ReadCsv(softmax_BN_loss)
 softmax_drop_los = ReadCsv(softmax_dropout_loss)
 
-mode = 14
+mode = 12
 
 if mode == 1:
     PlotAndSave(CNN_ac, MLP_acc, softmax_ac, [0, 2400], [0.7, 1.], 

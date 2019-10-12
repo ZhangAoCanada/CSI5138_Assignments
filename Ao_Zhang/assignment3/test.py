@@ -1,6 +1,8 @@
-import tensorflow as tf
+# import tensorflow as tf
+import os
 
-params = tf.constant([10,20,30,40])
-ids = tf.constant([0,1,2,3])
-with tf.Session() as sess:
-    print(tf.nn.embedding_lookup(params,ids).eval())
+print(os.path.isdir("test"))
+if os.path.isdir("test"):
+    print("exits")
+else:
+    os.mkdir("test")
