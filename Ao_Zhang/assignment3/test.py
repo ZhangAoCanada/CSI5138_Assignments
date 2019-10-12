@@ -77,14 +77,49 @@ class WordVectorAndList:
         return output_array
 
 
-# vocabulary file and word vector file from Glove.
-vocab_file = "vocab.txt"
-vector_file = "vectors.txt"
+# # vocabulary file and word vector file from Glove.
+# vocab_file = "vocab.txt"
+# vector_file = "vectors.txt"
 
-# get vocabulary and wordvector
-words_dict_creater = WordVectorAndList(vocab_file, vector_file)
-word_list = words_dict_creater.vocab_list
-word_vector = words_dict_creater.word_vector
+# # get vocabulary and wordvector
+# words_dict_creater = WordVectorAndList(vocab_file, vector_file)
+# word_list = words_dict_creater.vocab_list
+# word_vector = words_dict_creater.word_vector
 
-print(len(word_list))
-print(len(word_vector))
+# print(len(word_list))
+# print(len(word_vector))
+
+
+def FindAllSequanceLen(dataset_names, all_length):
+    """
+    Function:
+        Scan the data set and append all file length into one list.
+    """
+    for file_name in dataset_names:
+        with open(file_name, "r") as f:
+            line = f.readline()
+            words = line.split()
+            all_length.append(len(words))
+    return all_length
+
+def PlotLenHist(train_pos_files, train_neg_files, test_pos_files, test_neg_files):
+    """
+    Function:
+        Find all length w.r.t each dataset file, then plot the distribution
+    of the length.
+    """
+    all_length = []
+    all_length = FindAllSequanceLen(train_pos_files, all_length)
+    all_length = FindAllSequanceLen(train_neg_files, all_length)
+    all_length = FindAllSequanceLen(test_pos_files, all_length)
+    all_length = FindAllSequanceLen(test_neg_files, all_length)
+    all_length = np.array(all_length)
+    print([all_length.min(), all_length.max()])
+
+# all file names (Caution: dataset should be in the current dir)
+train_pos_files = glob("aclImdb/train/pos/*.txt")
+train_neg_files = glob("aclImdb/train/neg/*.txt")
+test_pos_files = glob("aclImdb/test/pos/*.txt")
+test_neg_files = glob("aclImdb/test/neg/*.txt")
+
+PlotLenHist(train_pos_files, train_neg_files, test_pos_files, test_neg_files)
