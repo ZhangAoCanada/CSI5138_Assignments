@@ -8,9 +8,9 @@ import os
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 #### other dependencies #####
-# import matplotlib
-# matplotlib.use("tkagg")
-# import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use("tkagg")
+import matplotlib.pyplot as plt
 import os
 import re
 import numpy as np
@@ -73,6 +73,7 @@ def PlotLenHist(train_pos_files, train_neg_files, test_pos_files, test_neg_files
     all_length = FindAllSequanceLen(test_pos_files, all_length)
     all_length = FindAllSequanceLen(test_neg_files, all_length)
     plt.hist(all_length, bins = 500)
+    plt.xlim([0, 1000])
     plt.title("Histogram of sequance length")
     plt.xlabel("length bins")
     plt.ylabel("number of sequences")
@@ -101,7 +102,7 @@ def ReadDatasetAsWordIndex(all_filenames, word_list, len_lim):
     all_dataset = np.array(all_dataset)
     return all_dataset
 
-def GetAllData(train_pos_files, train_neg_files, test_pos_files, test_neg_files, length_limit):
+def GetAllData(word_list, train_pos_files, train_neg_files, test_pos_files, test_neg_files, length_limit):
     train_pos_set = ReadDatasetAsWordIndex(train_pos_files, word_list, length_limit)
     train_neg_set = ReadDatasetAsWordIndex(train_neg_files, word_list, length_limit)
     test_pos_set = ReadDatasetAsWordIndex(test_pos_files, word_list, length_limit)
@@ -127,12 +128,12 @@ def CreatDataSet(pos_data, neg_data, name_prefix):
     np.save(name_prefix + "_labels.npy", labels)
     return dataset, labels
 
-def GetTrainAndTestSets(train_pos_files, train_neg_files, test_pos_files, 
+def GetTrainAndTestSets(word_list, train_pos_files, train_neg_files, test_pos_files, 
                         test_neg_files, length_limit):
     existance = os.path.exists("training_dataset.npy") and os.path.exists("training_labels.npy") \
                 and os.path.exists("test_dataset.npy") and os.path.exists("test_labels.npy")
     if not existance:
-        train_pos_set, train_neg_set, test_pos_set, test_neg_set = GetAllData(train_pos_files, \
+        train_pos_set, train_neg_set, test_pos_set, test_neg_set = GetAllData(word_list, train_pos_files, \
                                     train_neg_files, test_pos_files, test_neg_files, length_limit)
         training_set, training_label = CreatDataSet(train_pos_set, train_neg_set, name_prefix = "training")
         test_set, test_label = CreatDataSet(test_pos_set, test_neg_set, name_prefix = "test")
@@ -219,10 +220,10 @@ def main(mode, state_size):
     test_neg_files = glob("aclImdb/test/neg/*.txt")
 
     plot_hist = False
-    length_limit = 500
+    length_limit = 300
 
-    batch_size = 500
-    epoches = 200
+    batch_size = 1000
+    epoches = 150
     # state_size_requirements = [20, 50, 100, 200, 500]
     # state_size = state_size_requirements[1]
     # mode = "vanilla"
@@ -234,8 +235,8 @@ def main(mode, state_size):
     if plot_hist:
         PlotLenHist(train_pos_files, train_neg_files, test_pos_files, test_neg_files)
 
-    training_set, training_label, test_set, test_label = GetTrainAndTestSets(train_pos_files, \
-                                train_neg_files, test_pos_files, test_neg_files, length_limit)
+    training_set, training_label, test_set, test_label = GetTrainAndTestSets(word_list, \
+            train_pos_files, train_neg_files, test_pos_files, test_neg_files, length_limit)
 
     num_train_batch = len(training_set) // batch_size
     num_test_batch = len(test_set) // batch_size
@@ -289,7 +290,7 @@ def main(mode, state_size):
                 """
                 When GPU memory is not enough
                 """
-                if train_batch_id % 10 == 0:
+                if train_batch_id % 20 == 0:
                     sess.run(tf.local_variables_initializer())
                     for test_batch_id in range(num_test_batch):
                         X_test_batch = test_set[test_batch_id*batch_size: (test_batch_id+1)*batch_size]
@@ -304,11 +305,10 @@ if __name__ == "__main__":
     """
     2 modes: "vanilla", "lstm"
     """
-    mode = "lstm"
+    mode = "vanilla"
     state_size_requirements = [20, 50, 100, 200, 500]
-    state_size = state_size_requirements[1]
+    state_size = state_size_requirements[3]
     main(mode, state_size)
-
 
 
 
