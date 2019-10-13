@@ -63,6 +63,7 @@ def ReadCsv(filename):
     y = np.array(y)
     return x, y
 
+
 def SparseData(x_in, y_in, window = 25, order = 1):
     """
     Function:
@@ -174,14 +175,30 @@ lstm_200_loss = ReadCsv(lstm_200_loss_file)
 lstm_500_loss = ReadCsv(lstm_500_loss_file)
 
 
-mode = 6
+mode = 0
 
 # print all final accuracy values
 if mode == 0:
     vanilla_acc_results = np.array([vanilla_20_acc[1][-1], vanilla_50_acc[1][-1], vanilla_100_acc[1][-1], vanilla_200_acc[1][-1], vanilla_500_acc[1][-1]])
     lstm_acc_results = np.array([lstm_20_acc[1][-1], lstm_50_acc[1][-1], lstm_100_acc[1][-1], lstm_200_acc[1][-1], lstm_500_acc[1][-1]])
+    states = np.array([20, 50, 100, 200, 500])
     print(vanilla_acc_results)
     print(lstm_acc_results)
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    ax1.plot(states, vanilla_acc_results, "r")
+    ax1.set_xlabel("State dimensions")
+    ax1.set_ylabel("Accuracy on test set")
+    ax1.set_title("Vanilla RNN with different state dimensions.")
+    plt.savefig("result_images/vanilla_final_acc.png")
+    plt.cla()
+    ax1.clear()
+    ax1.plot(states, lstm_acc_results, "b")
+    ax1.set_xlabel("State dimensions")
+    ax1.set_ylabel("Accuracy on test set")
+    ax1.set_title("LSTM with different state dimensions.")
+    plt.savefig("result_images/lstm_final_acc.png")
+    plt.show()
 
 # plotting under different modes
 if mode == 1:
