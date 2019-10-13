@@ -266,7 +266,7 @@ class AssignmentRNNModel:
         self.learning_rate_start = 0.001
         self.global_step = tf.Variable(0, trainable=False)
         self.learning_rate = tf.train.exponential_decay(self.learning_rate_start, self.global_step, \
-                                                        50, 0.96, staircase=True)
+                                                        30, 0.96, staircase=True)
         # placeholders for input and output
         self.X_ids = tf.placeholder(tf.int32, [None, self.length_limit])
         self.Y = tf.placeholder(tf.float32, [None, 2])

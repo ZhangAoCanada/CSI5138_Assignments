@@ -174,7 +174,7 @@ lstm_200_loss = ReadCsv(lstm_200_loss_file)
 lstm_500_loss = ReadCsv(lstm_500_loss_file)
 
 
-mode = 0
+mode = 6
 
 # print all final accuracy values
 if mode == 0:
@@ -192,19 +192,19 @@ if mode == 1:
                 "vanilla_acc")
 if mode == 2:
     PlotAndSave(vanilla_20_loss, vanilla_50_loss, vanilla_100_loss, vanilla_200_loss, vanilla_500_loss,
-                [0, 4000], [0., 0.7], 
+                [0, 4000], [0.2, 0.6], 
                 "vanilla_20", "vanilla_50", "vanilla_100", "vanilla_200", "vanilla_500",
                 "loss values of different state sizes of vanilla RNN", "training steps", "loss value", 
                 "vanilla_loss")
 if mode == 3:
     PlotAndSave(lstm_20_acc, lstm_50_acc, lstm_100_acc, lstm_200_acc, lstm_500_acc,
-                [0, 4000], [0.78, 0.88], 
+                [0, 4000], [0.8, 0.88], 
                 "lstm_20", "lstm_50", "lstm_100", "lstm_200", "lstm_500",
                 "accuracies of different state sizes of LSTM", "training steps", "accuracy", 
                 "lstm_acc")
 if mode == 4:
     PlotAndSave(lstm_20_loss, lstm_50_loss, lstm_100_loss, lstm_200_loss, lstm_500_loss,
-                [0, 4000], [0., 0.7], 
+                [0, 4000], [0.25, 0.6], 
                 "lstm_20", "lstm_50", "lstm_100", "lstm_200", "lstm_500",
                 "loss values of different state sizes of LSTM", "training steps", "loss value", 
                 "lstm_loss")
