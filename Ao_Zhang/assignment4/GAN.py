@@ -3,7 +3,7 @@ import tensorflow as tf
 
 # mnist 784
 # cifa 3072
-class VAE:
+class GAN:
     def __init__(self, input_size, num_hidden_layers, hidden_layer_size, 
                 latent_size, dropout = False, BN = False):
         assert isinstance(input_size, int)
@@ -33,8 +33,7 @@ class VAE:
                         'enc_w4' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
                         'enc_w5' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
                         'enc_w6' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
-                        'enc_w_mu' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.latent_size))),
-                        'enc_w_var' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.latent_size))),
+                        'enc_w_output' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.latent_size))),
 
                         'dec_w1' : tf.Variable(tf.glorot_uniform_initializer()((self.latent_size, self.hidden_layer_size))),
                         'dec_w2' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
@@ -51,8 +50,7 @@ class VAE:
                         'enc_b4' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
                         'enc_b5' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
                         'enc_b6' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
-                        'enc_b_mu' : tf.Variable(tf.glorot_uniform_initializer()((self.latent_size,))),
-                        'enc_b_var' : tf.Variable(tf.glorot_uniform_initializer()((self.latent_size,))),
+                        'enc_b_output' : tf.Variable(tf.glorot_uniform_initializer()((self.latent_size,))),
 
                         'dec_b1' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
                         'dec_b2' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
@@ -63,102 +61,59 @@ class VAE:
                         'dec_b_output' : tf.Variable(tf.glorot_uniform_initializer()((self.input_size,))),
                         }
 
-    def Encoder(self):
-        hidden = tf.nn.relu(tf.add(tf.matmul(self.X, self.weights['enc_w1']), self.biases['enc_b1']))
+        self.D_variables = [self.weights['enc_w1'], self.weights['enc_w2'], self.weights['enc_w3'],\
+                            self.weights['enc_w4'], self.weights['enc_w5'], self.weights['enc_w6'],\
+                            self.weights['enc_w_output'], self.biases['enc_b1'], self.biases['enc_b2'],\
+                            self.biases['enc_b3'], self.biases['enc_b4'], self.biases['enc_b5'], \
+                            self.biases['enc_b6'], self.biases['enc_b_output']]
+        self.G_variables = [self.weights['dec_w1'], self.weights['dec_w2'], self.weights['dec_w3'],\
+                            self.weights['dec_w4'], self.weights['dec_w5'], self.weights['dec_w6'],\
+                            self.weights['dec_w_output'], self.biases['dec_b1'], self.biases['dec_b2'],\
+                            self.biases['dec_b3'], self.biases['dec_b4'], self.biases['dec_b5'], \
+                            self.biases['dec_b6'], self.biases['dec_b_output']]
+
+    def Discriminator(self, input_x):
+        D_weights = []
+        D_bias = []
+        hidden = tf.nn.relu(tf.add(tf.matmul(input_x, self.weights['enc_w1']), self.biases['enc_b1']))
         for i in range(self.num_hidden_layers):
             w_name = 'enc_w' + str(i + 2)
             b_name = 'enc_b' + str(i + 2)
             hidden = tf.nn.relu(tf.add(tf.matmul(hidden, self.weights[w_name]), self.biases[b_name]))
-        mean = tf.add(tf.matmul(hidden, self.weights['enc_w_mu']), self.biases['enc_b_mu'])   
-        variance = tf.add(tf.matmul(hidden, self.weights['enc_w_var']), self.biases['enc_b_var'])        
-        return mean, variance
+        logits = tf.add(tf.matmul(hidden, self.weights['enc_w_output']), self.biases['enc_b_output'])   
+        prob = tf.nn.sigmoid(logits)
+        return logits, prob
 
-    def Decoder(self, x_input):
-        hidden = tf.nn.relu(tf.add(tf.matmul(x_input, self.weights['dec_w1']), self.biases['dec_b1']))
+    def Generator(self, input_z):
+        G_weights = []
+        G_bias = []
+        hidden = tf.nn.relu(tf.add(tf.matmul(input_z, self.weights['dec_w1']), self.biases['dec_b1']))
         for i in range(self.num_hidden_layers):
             w_name = 'dec_w' + str(i + 2)
             b_name = 'dec_b' + str(i + 2)
             hidden = tf.nn.relu(tf.add(tf.matmul(hidden, self.weights[w_name]), self.biases[b_name]))
         logits = tf.add(tf.matmul(hidden, self.weights['dec_w_output']), self.biases['dec_b_output'])    
         prob = tf.nn.sigmoid(logits)
-        return logits, prob
+        return prob
 
-    def RamdomOutput(self,):
-        random_logits, random_prob = self.Decoder(self.Z)
-        return random_prob
+    def Generating(self,):
+        sample = self.Generator(self.Z)
+        return sample
 
-    def SampleLatent(self, mean, variance):
-        eps = tf.random.normal(shape = tf.shape(mean))
-        return mean + tf.exp(variance / 2) * eps
+    def Loss(self, return_loss_only = True):
+        G_sample = self.Generator(self.Z)
+        D_logit_real, D_real_prob= self.Discriminator(self.X)
+        D_logit_fake, D_fake_prob = self.Discriminator(G_sample)
+        D_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_real, labels=tf.ones_like(D_logit_real)))
+        D_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_fake, labels=tf.zeros_like(D_logit_fake)))
+        D_loss = D_loss_real + D_loss_fake
+        G_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_fake, labels=tf.ones_like(D_logit_fake)))
+        return D_loss, G_loss
 
-    def Loss(self,):
-        mean, variance = self.Encoder()
-        sampling = self.SampleLatent(mean, variance)
-        sample_logits, sample_prob = self.Decoder(sampling)
-        # E(log p|z (x_i | z_i))
-        reconstruction_loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(
-                                            logits=sample_logits, labels=self.X), axis=1)
-        # KL(q z|x (.|x_i) || p Z), since the variance we got is actually log(variance)
-        # therefore, we move everthing inside log
-        KL_loss = 0.5 * tf.reduce_sum(tf.exp(variance) + tf.square(mean) - 1. - variance, axis=1)
-        # vae loss function
-        vae_loss = tf.reduce_mean(reconstruction_loss + KL_loss)
-        return vae_loss
-
-    def TrainModel(self,):
-        loss = self.Loss()
-        optimizer = tf.train.AdamOptimizer(learning_rate = self.learning_rate)
-        learning_operation = optimizer.minimize(loss, global_step = self.global_step)
-        return learning_operation
-
-
-# loss_graph_name = "loss"
-#     acc_graph_name = "accuracy"
-#     summary_loss = tf.summary.scalar(loss_graph_name, loss)
-#     streaming_accuracy, streaming_accuracy_update = tf.contrib.metrics.streaming_mean(accuracy)
-#     summary_accuracy = tf.summary.scalar(acc_graph_name, streaming_accuracy)
-#     # summary_accuracy_straight = tf.summary.scalar(acc_graph_name, accuracy)
-
-#     train = model.TrainModel()
-
-#     # initialization
-#     init = tf.global_variables_initializer()
-
-#     # GPU settings
-#     gpu_options = tf.GPUOptions(allow_growth=True)
-
-#     with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
-#         summaries_train = 'logs/train/'
-#         summaries_test = 'logs/test/'
-#         folder_name = FolderName(mode, dropout, BN)
-#         train_writer = tf.summary.FileWriter(summaries_train + folder_name, sess.graph)
-#         test_writer = tf.summary.FileWriter(summaries_test + folder_name, sess.graph)
-#         summary_acc = tf.Summary()
-#         sess.run(init)
-#         for each_epoch in tqdm(range(epoches)):
-#             for each_batch_train in range(hm_batches_train):
-#                 X_train_batch = X_train[each_batch_train*batch_size: (each_batch_train+1)*batch_size]
-#                 Y_train_batch = Y_train[each_batch_train*batch_size: (each_batch_train+1)*batch_size]
-
-#                 _, loss_val, summary_l, steps = sess.run([train, loss, summary_loss, model.global_step], \
-#                                                                     feed_dict = {model.X : X_train_batch, \
-#                                                                                 model.Y : Y_train_batch})
-
-#                 train_writer.add_summary(summary_l, steps)
-                
-#                 """
-#                 When GPU memory is not enough
-#                 """
-#                 sess.run(tf.local_variables_initializer())
-#                 for each_batch_test in range(hm_batches_test):
-#                     X_test_batch = X_test[each_batch_test*batch_size: (each_batch_test+1)*batch_size]
-#                     Y_test_batch = Y_test[each_batch_test*batch_size: (each_batch_test+1)*batch_size]
-#                     sess.run([streaming_accuracy_update], feed_dict = {model.X : X_test_batch, \
-#                                                             model.Y : Y_test_batch})
-
-#                 summary_a = sess.run(summary_accuracy)
-#                 test_writer.add_summary(summary_a, steps)
-
-
-
-
+    def TrainModel(self):
+        D_loss, G_loss = self.Loss()
+        learning_operation_D = tf.train.AdamOptimizer(learning_rate = self.learning_rate).\
+                                minimize(D_loss, global_step = self.global_step, var_list=self.D_variables)
+        learning_operation_G = tf.train.AdamOptimizer(learning_rate = self.learning_rate).\
+                                minimize(G_loss, global_step = self.global_step, var_list=self.G_variables)
+        return learning_operation_D, learning_operation_G

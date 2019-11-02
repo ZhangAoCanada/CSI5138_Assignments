@@ -6,8 +6,12 @@ os.environ["CUDA_VISIBLE_DEVICES"]="1"
 import numpy as np
 import tensorflow as tf
 from vae import VAE
+from GAN import GAN
 from mlxtend.data import loadlocal_mnist
 import pickle
+from tqdm import tqdm
+
+import matplotlib.pyplot as plt
 
 ##################################################################
 def TranslateLables(labels, num_class):
@@ -86,18 +90,49 @@ def ReadCFAR(file_name, data_file=True):
 Mnist_local_path = "mnist/"
 X_train, Y_train, X_test, Y_test, input_size, output_size = GetMnistData(Mnist_local_path)
 
-test_data = X_train[:10] / 255.
+batch_size = 500
+hm_batches_train = len(X_train) // batch_size
 
 
-model = VAE(784, 3, 100)
-loss = model.Loss()
-train_op = model.TrainModel()
+test_data = X_train[:1] / 255.
+
+def SampleZ(size):
+    return np.random.uniform(-1., 1., size=size)
+
+
+# model = VAE(784, 3, 256, 20)
+model = GAN(784, 1, 256, 20)
+
+example = model.Generating()
+
+loss_D, loss_G = model.Loss()
+train_op_D, train_op_G = model.TrainModel()
 
 init = tf.global_variables_initializer()
 gpu_options = tf.GPUOptions(allow_growth=True)
 
+
+fig = plt.figure()
+ax = fig.add_subplot(111)
+
 with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
     sess.run(init)
-    for i in range(10000):
-        _, t1 = sess.run([train_op, loss], feed_dict={model.X: test_data})
-        print(t1)
+    for i in tqdm(range(10000000)):
+        # for each_batch_train in range(hm_batches_train):
+        #     X_train_batch = X_train[each_batch_train*batch_size: (each_batch_train+1)*batch_size]
+        #     X_train_batch /= 255.
+        _, Dloss = sess.run([train_op_D, loss_D], feed_dict={model.X: test_data, model.Z: SampleZ([10, 20])})
+        _, Gloss = sess.run([train_op_G, loss_G], feed_dict={model.X: test_data, model.Z: SampleZ([10, 20])})
+        if i % 10 == 0:
+            print([Dloss, Gloss])
+
+
+            sample = sess.run(example, feed_dict={model.Z: SampleZ([1, 20])})
+            sample = sample.reshape((28, 28))
+            gt = test_data[0].reshape((28, 28))
+            plt.cla()
+            ax.clear()
+            ax.imshow(np.concatenate([gt, sample], axis = 1))
+            fig.canvas.draw()
+            plt.pause(0.1)
+
