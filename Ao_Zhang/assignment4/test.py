@@ -6,11 +6,13 @@ os.environ["CUDA_VISIBLE_DEVICES"]="1"
 import numpy as np
 import tensorflow as tf
 from vae import VAE
-from GAN import GAN
+from WGAN import WGAN
 from mlxtend.data import loadlocal_mnist
 import pickle
 from tqdm import tqdm
 
+import matplotlib
+matplotlib.use("tkagg")
 import matplotlib.pyplot as plt
 
 ##################################################################
@@ -101,12 +103,13 @@ def SampleZ(size):
 
 
 # model = VAE(784, 3, 256, 20)
-model = GAN(784, 1, 256, 20)
+model = WGAN(784, 1, 256, 20)
 
 example = model.Generating()
 
 loss_D, loss_G = model.Loss()
 train_op_D, train_op_G = model.TrainModel()
+clip_D = model.ClipDiscriminatorWeights()
 
 init = tf.global_variables_initializer()
 gpu_options = tf.GPUOptions(allow_growth=True)
@@ -121,7 +124,8 @@ with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
         # for each_batch_train in range(hm_batches_train):
         #     X_train_batch = X_train[each_batch_train*batch_size: (each_batch_train+1)*batch_size]
         #     X_train_batch /= 255.
-        _, Dloss = sess.run([train_op_D, loss_D], feed_dict={model.X: test_data, model.Z: SampleZ([10, 20])})
+        for whatever in range(5):
+            _, Dloss, _ = sess.run([train_op_D, loss_D, clip_D], feed_dict={model.X: test_data, model.Z: SampleZ([10, 20])})
         _, Gloss = sess.run([train_op_G, loss_G], feed_dict={model.X: test_data, model.Z: SampleZ([10, 20])})
         if i % 10 == 0:
             print([Dloss, Gloss])

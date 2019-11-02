@@ -3,7 +3,7 @@ import tensorflow as tf
 
 # mnist 784
 # cifa 3072
-class GAN:
+class WGAN:
     def __init__(self, input_size, num_hidden_layers, hidden_layer_size, 
                 latent_size, dropout = False, BN = False):
         assert isinstance(input_size, int)
@@ -19,7 +19,7 @@ class GAN:
         self.Z = tf.placeholder(tf.float32, shape = [None, self.latent_size])
 
         self.global_step = tf.Variable(0, trainable=False)
-        self.learning_rate_start = 0.0001
+        self.learning_rate_start = 0.001
         self.learning_rate = tf.train.exponential_decay(self.learning_rate_start, self.global_step, \
                                                         100, 0.96, staircase=True)
         self.dropout = dropout
@@ -104,16 +104,21 @@ class GAN:
         G_sample = self.Generator(self.Z)
         D_logit_real, D_real_prob= self.Discriminator(self.X)
         D_logit_fake, D_fake_prob = self.Discriminator(G_sample)
-        D_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_real, labels=tf.ones_like(D_logit_real)))
-        D_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_fake, labels=tf.zeros_like(D_logit_fake)))
-        D_loss = D_loss_real + D_loss_fake
-        G_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_fake, labels=tf.ones_like(D_logit_fake)))
+
+        D_loss = tf.reduce_mean(D_logit_real) - tf.reduce_mean(D_logit_fake)
+        G_loss = -tf.reduce_mean(D_logit_fake)
+
         return D_loss, G_loss
 
     def TrainModel(self):
         D_loss, G_loss = self.Loss()
-        learning_operation_D = tf.train.AdamOptimizer(learning_rate = self.learning_rate).\
-                                minimize(D_loss, global_step = self.global_step, var_list=self.D_variables)
-        learning_operation_G = tf.train.AdamOptimizer(learning_rate = self.learning_rate).\
+        learning_operation_D = tf.train.RMSPropOptimizer(learning_rate = self.learning_rate).\
+                                minimize(-D_loss, global_step = self.global_step, var_list=self.D_variables)
+        learning_operation_G = tf.train.RMSPropOptimizer(learning_rate = self.learning_rate).\
                                 minimize(G_loss, global_step = self.global_step, var_list=self.G_variables)
         return learning_operation_D, learning_operation_G
+
+    def ClipDiscriminatorWeights(self):
+        clip_D = [var.assign(tf.clip_by_value(var, -0.01, 0.01)) for var in self.D_variables]
+        return clip_D
+
