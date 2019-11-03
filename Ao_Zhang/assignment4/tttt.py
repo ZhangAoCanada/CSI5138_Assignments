@@ -1,4 +1,12 @@
+import matplotlib
+matplotlib.use("tkagg")
+import matplotlib.pyplot as plt
 import numpy as np
-a = np.random.uniform(-1., 1., size=[10, 20])
 
-print(a.shape)
+
+a = np.arange(100)
+
+b = 2 * a
+
+plt.plot(a, b)
+plt.show()
