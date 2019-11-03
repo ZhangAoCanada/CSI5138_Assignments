@@ -1,3 +1,8 @@
+##### set specific gpu #####
+import os
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
+
 import numpy as np
 import tensorflow as tf
 
@@ -65,25 +70,27 @@ class VAE:
 
     def Encoder(self):
         hidden = tf.nn.relu(tf.add(tf.matmul(self.X, self.weights['enc_w1']), self.biases['enc_b1']))
-        for i in range(self.num_hidden_layers):
-            w_name = 'enc_w' + str(i + 2)
-            b_name = 'enc_b' + str(i + 2)
-            hidden = tf.nn.relu(tf.add(tf.matmul(hidden, self.weights[w_name]), self.biases[b_name]))
+        if self.num_hidden_layers != 0:
+            for i in range(self.num_hidden_layers):
+                w_name = 'enc_w' + str(i + 2)
+                b_name = 'enc_b' + str(i + 2)
+                hidden = tf.nn.relu(tf.add(tf.matmul(hidden, self.weights[w_name]), self.biases[b_name]))
         mean = tf.add(tf.matmul(hidden, self.weights['enc_w_mu']), self.biases['enc_b_mu'])   
         variance = tf.add(tf.matmul(hidden, self.weights['enc_w_var']), self.biases['enc_b_var'])        
         return mean, variance
 
     def Decoder(self, x_input):
         hidden = tf.nn.relu(tf.add(tf.matmul(x_input, self.weights['dec_w1']), self.biases['dec_b1']))
-        for i in range(self.num_hidden_layers):
-            w_name = 'dec_w' + str(i + 2)
-            b_name = 'dec_b' + str(i + 2)
-            hidden = tf.nn.relu(tf.add(tf.matmul(hidden, self.weights[w_name]), self.biases[b_name]))
+        if self.num_hidden_layers != 0:
+            for i in range(self.num_hidden_layers):
+                w_name = 'dec_w' + str(i + 2)
+                b_name = 'dec_b' + str(i + 2)
+                hidden = tf.nn.relu(tf.add(tf.matmul(hidden, self.weights[w_name]), self.biases[b_name]))
         logits = tf.add(tf.matmul(hidden, self.weights['dec_w_output']), self.biases['dec_b_output'])    
         prob = tf.nn.sigmoid(logits)
         return logits, prob
 
-    def RamdomOutput(self,):
+    def Generating(self,):
         random_logits, random_prob = self.Decoder(self.Z)
         return random_prob
 
@@ -110,54 +117,6 @@ class VAE:
         optimizer = tf.train.AdamOptimizer(learning_rate = self.learning_rate)
         learning_operation = optimizer.minimize(loss, global_step = self.global_step)
         return learning_operation
-
-
-# loss_graph_name = "loss"
-#     acc_graph_name = "accuracy"
-#     summary_loss = tf.summary.scalar(loss_graph_name, loss)
-#     streaming_accuracy, streaming_accuracy_update = tf.contrib.metrics.streaming_mean(accuracy)
-#     summary_accuracy = tf.summary.scalar(acc_graph_name, streaming_accuracy)
-#     # summary_accuracy_straight = tf.summary.scalar(acc_graph_name, accuracy)
-
-#     train = model.TrainModel()
-
-#     # initialization
-#     init = tf.global_variables_initializer()
-
-#     # GPU settings
-#     gpu_options = tf.GPUOptions(allow_growth=True)
-
-#     with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
-#         summaries_train = 'logs/train/'
-#         summaries_test = 'logs/test/'
-#         folder_name = FolderName(mode, dropout, BN)
-#         train_writer = tf.summary.FileWriter(summaries_train + folder_name, sess.graph)
-#         test_writer = tf.summary.FileWriter(summaries_test + folder_name, sess.graph)
-#         summary_acc = tf.Summary()
-#         sess.run(init)
-#         for each_epoch in tqdm(range(epoches)):
-#             for each_batch_train in range(hm_batches_train):
-#                 X_train_batch = X_train[each_batch_train*batch_size: (each_batch_train+1)*batch_size]
-#                 Y_train_batch = Y_train[each_batch_train*batch_size: (each_batch_train+1)*batch_size]
-
-#                 _, loss_val, summary_l, steps = sess.run([train, loss, summary_loss, model.global_step], \
-#                                                                     feed_dict = {model.X : X_train_batch, \
-#                                                                                 model.Y : Y_train_batch})
-
-#                 train_writer.add_summary(summary_l, steps)
-                
-#                 """
-#                 When GPU memory is not enough
-#                 """
-#                 sess.run(tf.local_variables_initializer())
-#                 for each_batch_test in range(hm_batches_test):
-#                     X_test_batch = X_test[each_batch_test*batch_size: (each_batch_test+1)*batch_size]
-#                     Y_test_batch = Y_test[each_batch_test*batch_size: (each_batch_test+1)*batch_size]
-#                     sess.run([streaming_accuracy_update], feed_dict = {model.X : X_test_batch, \
-#                                                             model.Y : Y_test_batch})
-
-#                 summary_a = sess.run(summary_accuracy)
-#                 test_writer.add_summary(summary_a, steps)
 
 
 

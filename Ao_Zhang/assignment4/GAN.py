@@ -1,3 +1,8 @@
+##### set specific gpu #####
+import os
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
+
 import numpy as np
 import tensorflow as tf
 
@@ -21,7 +26,7 @@ class GAN:
         self.global_step = tf.Variable(0, trainable=False)
         self.learning_rate_start = 0.001
         self.learning_rate = tf.train.exponential_decay(self.learning_rate_start, self.global_step, \
-                                                        5000, 0.96, staircase=True)
+                                                        10000, 0.96, staircase=True)
 
         self.dropout = dropout
         self.BN = BN
@@ -153,10 +158,10 @@ class GAN:
         D_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_fake, labels=tf.zeros_like(D_logit_fake)))
         D_loss = D_loss_real + D_loss_fake
         G_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_fake, labels=tf.ones_like(D_logit_fake)))
-        return D_loss, G_loss, D_real_prob
+        return D_loss, G_loss
 
     def TrainModel(self):
-        D_loss, G_loss, _ = self.Loss()
+        D_loss, G_loss = self.Loss()
         learning_operation_D = tf.train.AdamOptimizer(learning_rate = self.learning_rate).\
                                 minimize(D_loss, global_step = self.global_step, var_list=self.D_variables)
         learning_operation_G = tf.train.AdamOptimizer(learning_rate = self.learning_rate).\

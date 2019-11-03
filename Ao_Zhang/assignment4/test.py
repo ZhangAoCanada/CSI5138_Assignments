@@ -1,11 +1,11 @@
-# ##### set specific gpu #####
-# import os
-# os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-# os.environ["CUDA_VISIBLE_DEVICES"]="1"
-#### other dependencies #####
+##### set specific gpu #####
+import os
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
+### other dependencies #####
 import numpy as np
 import tensorflow as tf
-from vae import VAE
+from VAE import VAE
 from GAN import GAN
 from WGAN import WGAN
 from mlxtend.data import loadlocal_mnist
@@ -104,13 +104,13 @@ def SampleZ(size):
     return np.random.uniform(-1., 1., size=size)
 
 
-# model = VAE(784, 3, 256, 20)
-model = GAN(784, 0, 256, 100)
-# model = WGAN(784, 1, 256, 20)
+# model = VAE(input_size, 3, 256, 20)
+model = GAN(input_size, 0, 256, 100)
+# model = WGAN(input_size, 1, 256, 20)
 
 example = model.Generating()
 
-loss_D, loss_G, prob_fake = model.Loss()
+loss_D, loss_G = model.Loss()
 train_op_D, train_op_G = model.TrainModel()
 # clip_D = model.ClipDiscriminatorWeights()
 
