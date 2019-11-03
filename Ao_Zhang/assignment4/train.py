@@ -357,17 +357,17 @@ if __name__ == "__main__":
     model_names = ["VAE", "GAN", "WGAN"]
     dataset_names = ["MNIST", "CIFAR"]
     num_hidden = 2 # must <= 5
-    latent_size = 200
+    latent_size = 500
 
-    num_hidden_multi = [0, 1, 2, 3, 4, 5]
-    latent_size_multi = [10, 20, 50, 100, 200, 300]
+    num_hiddens = [0, 1, 2, 3, 4, 5]
+    latent_sizes = [10, 20, 50, 100, 200, 300, 500, 1000]
     # debug(model_name, dataset_name, num_hidden, latent_size, True)
-    main(model_names[1], dataset_names[1], num_hidden, latent_size, True, True)
+    main(model_names[1], dataset_names[1], num_hiddens[2], latent_sizes[6], True, True)
 
     # for model_name in model_names:
     #     for dataset_name in dataset_names:
-    #         for num_hidden in num_hidden_multi:
-    #             for latent_size in latent_size_multi:
-    #                 main(model_name, dataset_name, num_hidden, latent_size, True, True)
+    #         for num_hidden in num_hiddens:
+    #             for latent_size in latent_sizes:
+    #                 main(model_name, dataset_name, num_hidden, latent_size, False, True)
 
 
