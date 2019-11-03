@@ -217,7 +217,7 @@ def debug(model_name, dataset_name, num_hidden, latent_size, if_plot=False):
                         fig.canvas.draw()
                         plt.pause(0.01)
 
-def main(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_save=True):
+def main(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size, if_plot=False, if_save=True):
     """
     Function:
         Main Function, for training the model and testing
@@ -237,10 +237,10 @@ def main(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_sa
     sample_size = 20
     hm_batches_train = len(X_train) // batch_size
 
-    if model_name == "VAE":
-        hidden_layer_size = 256 # feel free to tune
-    elif model_name == "GAN" or model_name == "WGAN":
-        hidden_layer_size = 512 # feel free to tune        
+    # if model_name == "VAE":
+    #     hidden_layer_size = 256 # feel free to tune
+    # elif model_name == "GAN" or model_name == "WGAN":
+    #     hidden_layer_size = 512 # feel free to tune        
 
     testdata = X_train[:1].copy()
 
@@ -272,7 +272,7 @@ def main(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_sa
         raise ValueError("Please input the right model name.")
 
     log_dir = "logs/" + model_name + "_" + dataset_name + "_" + \
-                str(num_hidden) + "_" + str(latent_size) + "/"
+                str(num_hidden) + "_" + str(latent_size) + "_" + str(hidden_layer_size) + "/"
     
     init = tf.global_variables_initializer()
     gpu_options = tf.GPUOptions(allow_growth=True)
@@ -328,10 +328,10 @@ def main(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_sa
                         sample = TransferToImage(sample)
 
                     if if_save:
-                        dir_n = "samples/" + model_name + "_" + dataset_name + "_" + str(num_hidden) + "_" + str(latent_size)
+                        dir_n = "samples/" + model_name + "_" + dataset_name + "_" + str(num_hidden) + "_" + str(latent_size) + "_" + str(hidden_layer_size)
                         if not os.path.exists(dir_n):
                             os.mkdir(dir_n)
-                        file_n = "samples/" + model_name + "_" + dataset_name + "_" + str(num_hidden) + "_" + str(latent_size) + \
+                        file_n = "samples/" + model_name + "_" + dataset_name + "_" + str(num_hidden) + "_" + str(latent_size) + "_" + str(hidden_layer_size) + \
                                     "/" + str(epoch_id) + "_" + str(each_batch_train) + ".npy"
                         np.save(file_n, sample)
 
@@ -361,13 +361,15 @@ if __name__ == "__main__":
 
     num_hiddens = [0, 1, 2, 3, 4, 5]
     latent_sizes = [10, 20, 50, 100, 200, 300, 500, 1000]
+    hidden_layer_sizes = [128, 256, 512, 1024]
     # debug(model_name, dataset_name, num_hidden, latent_size, True)
-    main(model_names[1], dataset_names[1], num_hiddens[2], latent_sizes[6], True, True)
+    main(model_names[1], dataset_names[1], num_hiddens[2], latent_sizes[6], hidden_layer_sizes[1], False, True)
 
     # for model_name in model_names:
     #     for dataset_name in dataset_names:
     #         for num_hidden in num_hiddens:
     #             for latent_size in latent_sizes:
-    #                 main(model_name, dataset_name, num_hidden, latent_size, False, True)
+    #                 for hidden_layer_size in hidden_layer_sizes:
+    #                     main(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size, False, True)
 
 

@@ -1,7 +1,7 @@
-##### set specific gpu #####
-import os
-os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
+# ##### set specific gpu #####
+# import os
+# os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+# os.environ["CUDA_VISIBLE_DEVICES"]="1"
 ### other dependencies #####
 import numpy as np
 import tensorflow as tf
