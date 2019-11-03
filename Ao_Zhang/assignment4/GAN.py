@@ -19,12 +19,48 @@ class GAN:
         self.Z = tf.placeholder(tf.float32, shape = [None, self.latent_size])
 
         self.global_step = tf.Variable(0, trainable=False)
-        self.learning_rate_start = 0.0001
+        self.learning_rate_start = 0.001
         self.learning_rate = tf.train.exponential_decay(self.learning_rate_start, self.global_step, \
-                                                        100, 0.96, staircase=True)
+                                                        5000, 0.96, staircase=True)
+
         self.dropout = dropout
         self.BN = BN
         self.dropout_rate = 0.2
+
+        # self.weights = {
+        #                 'enc_w1' : tf.Variable(self.VarInitializer((self.input_size, self.hidden_layer_size))),
+        #                 'enc_w2' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'enc_w3' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'enc_w4' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'enc_w5' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'enc_w6' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'enc_w_output' : tf.Variable(self.VarInitializer((self.hidden_layer_size, 1))),
+
+        #                 'dec_w1' : tf.Variable(self.VarInitializer((self.latent_size, self.hidden_layer_size))),
+        #                 'dec_w2' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'dec_w3' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'dec_w4' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'dec_w5' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'dec_w6' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'dec_w_output' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.input_size))),
+        #                 }
+        # self.biases = {
+        #                 'enc_b1' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+        #                 'enc_b2' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+        #                 'enc_b3' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+        #                 'enc_b4' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+        #                 'enc_b5' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+        #                 'enc_b6' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+        #                 'enc_b_output' : tf.Variable(tf.zeros((1,))),
+
+        #                 'dec_b1' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+        #                 'dec_b2' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+        #                 'dec_b3' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+        #                 'dec_b4' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+        #                 'dec_b5' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+        #                 'dec_b6' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+        #                 'dec_b_output' : tf.Variable(tf.zeros((self.input_size,))),
+        #                 }
 
         self.weights = {
                         'enc_w1' : tf.Variable(tf.glorot_uniform_initializer()((self.input_size, self.hidden_layer_size))),
@@ -33,7 +69,7 @@ class GAN:
                         'enc_w4' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
                         'enc_w5' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
                         'enc_w6' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
-                        'enc_w_output' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.latent_size))),
+                        'enc_w_output' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, 1))),
 
                         'dec_w1' : tf.Variable(tf.glorot_uniform_initializer()((self.latent_size, self.hidden_layer_size))),
                         'dec_w2' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
@@ -50,7 +86,7 @@ class GAN:
                         'enc_b4' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
                         'enc_b5' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
                         'enc_b6' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
-                        'enc_b_output' : tf.Variable(tf.glorot_uniform_initializer()((self.latent_size,))),
+                        'enc_b_output' : tf.Variable(tf.glorot_uniform_initializer()((1,))),
 
                         'dec_b1' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
                         'dec_b2' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
@@ -61,37 +97,41 @@ class GAN:
                         'dec_b_output' : tf.Variable(tf.glorot_uniform_initializer()((self.input_size,))),
                         }
 
-        self.D_variables = [self.weights['enc_w1'], self.weights['enc_w2'], self.weights['enc_w3'],\
-                            self.weights['enc_w4'], self.weights['enc_w5'], self.weights['enc_w6'],\
-                            self.weights['enc_w_output'], self.biases['enc_b1'], self.biases['enc_b2'],\
-                            self.biases['enc_b3'], self.biases['enc_b4'], self.biases['enc_b5'], \
-                            self.biases['enc_b6'], self.biases['enc_b_output']]
-        self.G_variables = [self.weights['dec_w1'], self.weights['dec_w2'], self.weights['dec_w3'],\
-                            self.weights['dec_w4'], self.weights['dec_w5'], self.weights['dec_w6'],\
-                            self.weights['dec_w_output'], self.biases['dec_b1'], self.biases['dec_b2'],\
-                            self.biases['dec_b3'], self.biases['dec_b4'], self.biases['dec_b5'], \
-                            self.biases['dec_b6'], self.biases['dec_b_output']]
+        # self.D_variables = [self.weights['enc_w1'], self.weights['enc_w2'], self.weights['enc_w3'],\
+        #                     self.weights['enc_w4'], self.weights['enc_w5'], self.weights['enc_w6'],\
+        #                     self.weights['enc_w_output'], self.biases['enc_b1'], self.biases['enc_b2'],\
+        #                     self.biases['enc_b3'], self.biases['enc_b4'], self.biases['enc_b5'], \
+        #                     self.biases['enc_b6'], self.biases['enc_b_output']]
+        # self.G_variables = [self.weights['dec_w1'], self.weights['dec_w2'], self.weights['dec_w3'],\
+        #                     self.weights['dec_w4'], self.weights['dec_w5'], self.weights['dec_w6'],\
+        #                     self.weights['dec_w_output'], self.biases['dec_b1'], self.biases['dec_b2'],\
+        #                     self.biases['dec_b3'], self.biases['dec_b4'], self.biases['dec_b5'], \
+        #                     self.biases['dec_b6'], self.biases['dec_b_output']]
+
+        self.D_variables = [self.weights[w_var] for w_var in self.weights.keys() if 'enc_' in w_var] + \
+                            [self.biases[b_var] for b_var in self.biases.keys() if 'enc_' in b_var]
+
+        self.G_variables = [self.weights[w_var] for w_var in self.weights.keys() if 'dec_' in w_var] + \
+                            [self.biases[b_var] for b_var in self.biases.keys() if 'dec_' in b_var]
 
     def Discriminator(self, input_x):
-        D_weights = []
-        D_bias = []
         hidden = tf.nn.relu(tf.add(tf.matmul(input_x, self.weights['enc_w1']), self.biases['enc_b1']))
-        for i in range(self.num_hidden_layers):
-            w_name = 'enc_w' + str(i + 2)
-            b_name = 'enc_b' + str(i + 2)
-            hidden = tf.nn.relu(tf.add(tf.matmul(hidden, self.weights[w_name]), self.biases[b_name]))
+        if self.num_hidden_layers != 0:
+            for i in range(self.num_hidden_layers):
+                w_name = 'enc_w' + str(i + 2)
+                b_name = 'enc_b' + str(i + 2)
+                hidden = tf.nn.relu(tf.add(tf.matmul(hidden, self.weights[w_name]), self.biases[b_name]))
         logits = tf.add(tf.matmul(hidden, self.weights['enc_w_output']), self.biases['enc_b_output'])   
         prob = tf.nn.sigmoid(logits)
         return logits, prob
 
     def Generator(self, input_z):
-        G_weights = []
-        G_bias = []
         hidden = tf.nn.relu(tf.add(tf.matmul(input_z, self.weights['dec_w1']), self.biases['dec_b1']))
-        for i in range(self.num_hidden_layers):
-            w_name = 'dec_w' + str(i + 2)
-            b_name = 'dec_b' + str(i + 2)
-            hidden = tf.nn.relu(tf.add(tf.matmul(hidden, self.weights[w_name]), self.biases[b_name]))
+        if self.num_hidden_layers != 0:
+            for i in range(self.num_hidden_layers):
+                w_name = 'dec_w' + str(i + 2)
+                b_name = 'dec_b' + str(i + 2)
+                hidden = tf.nn.relu(tf.add(tf.matmul(hidden, self.weights[w_name]), self.biases[b_name]))
         logits = tf.add(tf.matmul(hidden, self.weights['dec_w_output']), self.biases['dec_b_output'])    
         prob = tf.nn.sigmoid(logits)
         return prob
@@ -99,6 +139,11 @@ class GAN:
     def Generating(self,):
         sample = self.Generator(self.Z)
         return sample
+
+    def VarInitializer(self, size):
+        in_dim = size[0]
+        xavier_stddev = 1. / tf.sqrt(in_dim / 2.)
+        return tf.random_normal(shape=size, stddev=xavier_stddev)
 
     def Loss(self, return_loss_only = True):
         G_sample = self.Generator(self.Z)
@@ -108,12 +153,15 @@ class GAN:
         D_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_fake, labels=tf.zeros_like(D_logit_fake)))
         D_loss = D_loss_real + D_loss_fake
         G_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_fake, labels=tf.ones_like(D_logit_fake)))
-        return D_loss, G_loss
+        return D_loss, G_loss, D_real_prob
 
     def TrainModel(self):
-        D_loss, G_loss = self.Loss()
+        D_loss, G_loss, _ = self.Loss()
         learning_operation_D = tf.train.AdamOptimizer(learning_rate = self.learning_rate).\
                                 minimize(D_loss, global_step = self.global_step, var_list=self.D_variables)
         learning_operation_G = tf.train.AdamOptimizer(learning_rate = self.learning_rate).\
                                 minimize(G_loss, global_step = self.global_step, var_list=self.G_variables)
+        # learning_operation_D = tf.train.AdamOptimizer().minimize(D_loss, var_list=self.D_variables)
+        # learning_operation_G = tf.train.AdamOptimizer().minimize(G_loss, var_list=self.G_variables)
+
         return learning_operation_D, learning_operation_G

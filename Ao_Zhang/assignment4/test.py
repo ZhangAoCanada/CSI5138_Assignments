@@ -92,24 +92,25 @@ def ReadCFAR(file_name, data_file=True):
 
 Mnist_local_path = "mnist/"
 X_train, Y_train, X_test, Y_test, input_size, output_size = GetMnistData(Mnist_local_path)
+X_train /= 255.
 
-batch_size = 500
+batch_size = 128
 hm_batches_train = len(X_train) // batch_size
 
 
-test_data = X_train[:1] / 255.
+test_data = X_train[:1]
 
 def SampleZ(size):
     return np.random.uniform(-1., 1., size=size)
 
 
 # model = VAE(784, 3, 256, 20)
-model = GAN(784, 1, 256, 20)
+model = GAN(784, 0, 256, 100)
 # model = WGAN(784, 1, 256, 20)
 
 example = model.Generating()
 
-loss_D, loss_G = model.Loss()
+loss_D, loss_G, prob_fake = model.Loss()
 train_op_D, train_op_G = model.TrainModel()
 # clip_D = model.ClipDiscriminatorWeights()
 
@@ -122,23 +123,24 @@ ax = fig.add_subplot(111)
 
 with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
     sess.run(init)
-    for i in tqdm(range(10000000)):
+    for epoch_id in tqdm(range(1000)):
+        np.random.shuffle(X_train)
         for each_batch_train in range(hm_batches_train):
             X_train_batch = X_train[each_batch_train*batch_size: (each_batch_train+1)*batch_size]
-            X_train_batch /= 255.
+
             for whatever in range(5):
-                # _, Dloss, _ = sess.run([train_op_D, loss_D, clip_D], feed_dict={model.X: X_train_batch, model.Z: SampleZ([10, 20])})
-                _, Dloss = sess.run([train_op_D, loss_D], feed_dict={model.X: X_train_batch, model.Z: SampleZ([10, 20])})
-            _, Gloss = sess.run([train_op_G, loss_G], feed_dict={model.X: X_train_batch, model.Z: SampleZ([10, 20])})
-            if (i*batch_size + each_batch_train) % 100 == 0:
+                _, Dloss = sess.run([train_op_D, loss_D], feed_dict={model.X: X_train_batch, model.Z: SampleZ([batch_size, 100])})
+            _, Gloss = sess.run([train_op_G, loss_G], feed_dict={model.Z: SampleZ([batch_size, 100])})
+
+            if (epoch_id*batch_size + each_batch_train) % 20 == 0:
+                sample = sess.run(example, feed_dict={model.Z: SampleZ([1, 100])})
                 print([Dloss, Gloss])
 
-                sample = sess.run(example, feed_dict={model.Z: SampleZ([1, 20])})
                 sample = sample.reshape((28, 28))
                 gt = test_data[0].reshape((28, 28))
                 plt.cla()
                 ax.clear()
-                ax.imshow(np.concatenate([gt, sample], axis = 1))
+                ax.imshow(sample)
                 fig.canvas.draw()
                 plt.pause(0.01)
 
