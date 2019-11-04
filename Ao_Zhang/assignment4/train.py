@@ -235,14 +235,11 @@ def main(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size, i
     batch_size = 256
     epochs = 500
     sample_size = 30
-    hm_batches_train = len(X_train) // batch_size
-
-    # if model_name == "VAE":
-    #     hidden_layer_size = 256 # feel free to tune
-    # elif model_name == "GAN" or model_name == "WGAN":
-    #     hidden_layer_size = 512 # feel free to tune        
+    hm_batches_train = len(X_train) // batch_size    
 
     testdata = X_train[:1].copy()
+
+    tf.reset_default_graph()
 
     if model_name == "VAE":
         model = VAE(input_size, num_hidden, hidden_layer_size, latent_size)
@@ -250,17 +247,17 @@ def main(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size, i
         loss = model.Loss()
         train_op = model.TrainModel()
 
-        summary_loss_1 = tf.summary.scalar("loss", loss)
-        merged_op = tf.summary.merge([summary_loss_1])
+        summary_loss_1 = tf.summary.scalar(dataset_name + "_" + "loss", loss)
+        # merged_op = tf.summary.merge([summary_loss_1])
     elif model_name == "GAN":
         model = GAN(input_size, num_hidden, hidden_layer_size, latent_size)
         generat_samples = model.Generating()
         loss_D, loss_G = model.Loss()
         train_op_D, train_op_G = model.TrainModel()
 
-        summary_loss_1 = tf.summary.scalar("loss_D", loss_D)
-        summary_loss_2 = tf.summary.scalar("loss_G", loss_G)
-        merged_op = tf.summary.merge([summary_loss_1, summary_loss_2])
+        summary_loss_1 = tf.summary.scalar(dataset_name + "_"  + "loss_D", loss_D)
+        summary_loss_2 = tf.summary.scalar(dataset_name + "_"  + "loss_G", loss_G)
+        # merged_op = tf.summary.merge([summary_loss_1, summary_loss_2])
     elif model_name == "WGAN":
         model = WGAN(input_size, num_hidden, hidden_layer_size, latent_size)
         generat_samples = model.Generating()
@@ -268,12 +265,11 @@ def main(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size, i
         train_op_D, train_op_G = model.TrainModel()
         clip_D = model.ClipDiscriminatorWeights()
 
-        summary_loss_1 = tf.summary.scalar("loss_D", loss_D)
-        summary_loss_2 = tf.summary.scalar("loss_G", loss_G)
-        merged_op = tf.summary.merge([summary_loss_1, summary_loss_2])
+        summary_loss_1 = tf.summary.scalar(dataset_name + "_"  + "loss_D", loss_D)
+        summary_loss_2 = tf.summary.scalar(dataset_name + "_"  + "loss_G", loss_G)
+        # merged_op = tf.summary.merge([summary_loss_1, summary_loss_2])
     else:
         raise ValueError("Please input the right model name.")
-
 
     log_dir = "logs/" + model_name + "_" + dataset_name + "_" + \
                 str(num_hidden) + "_" + str(latent_size) + "_" + str(hidden_layer_size) + "/"
@@ -291,20 +287,21 @@ def main(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size, i
         train_writer = tf.summary.FileWriter(summaries, sess.graph)
 
         sess.run(init)
+        counter = 0
         for epoch_id in tqdm(range(epochs)):
             np.random.shuffle(X_train)
             for each_batch_train in range(hm_batches_train):
                 X_train_batch = X_train[each_batch_train*batch_size: (each_batch_train+1)*batch_size]
 
                 if model_name == "VAE":
-                    _, _, loss_vae, sum_l, steps = sess.run([train_op, merged_op, loss, summary_loss_1, model.global_step], 
+                    _, loss_vae, sum_l, steps = sess.run([train_op, loss, summary_loss_1, model.global_step], 
                                                         feed_dict={model.X: X_train_batch})
                     train_writer.add_summary(sum_l, steps)
                     # print([loss_vae])
                 elif model_name == "GAN":
                     for whatever in range(5):
                         _, Dloss = sess.run([train_op_D, loss_D], feed_dict={model.X: X_train_batch, model.Z: GANSampleZ([batch_size, latent_size])})
-                    _, _, Gloss, sum_l_d, sum_l_g, steps = sess.run([train_op_G, merged_op, loss_G, summary_loss_1, summary_loss_2, model.global_step], \
+                    _, Gloss, sum_l_d, sum_l_g, steps = sess.run([train_op_G, loss_G, summary_loss_1, summary_loss_2, model.global_step], \
                                         feed_dict={model.X: X_train_batch, model.Z: GANSampleZ([batch_size, latent_size])})
                     train_writer.add_summary(sum_l_d, steps)                    
                     train_writer.add_summary(sum_l_g, steps)                    
@@ -312,13 +309,13 @@ def main(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size, i
                 elif model_name == "WGAN":
                     for whatever in range(5):
                         _, Dloss, clip_d = sess.run([train_op_D, loss_D, clip_D], feed_dict={model.X: X_train_batch, model.Z: GANSampleZ([batch_size, latent_size])})
-                    _, _, Gloss, sum_l_d, sum_l_g, steps = sess.run([train_op_G,  merged_op, loss_G, summary_loss_1, summary_loss_2, model.global_step], \
+                    _, Gloss, sum_l_d, sum_l_g, steps = sess.run([train_op_G, loss_G, summary_loss_1, summary_loss_2, model.global_step], \
                                         feed_dict={model.X: X_train_batch, model.Z: GANSampleZ([batch_size, latent_size])})
                     train_writer.add_summary(sum_l_d, steps)                    
                     train_writer.add_summary(sum_l_g, steps)  
                     # print([Dloss, Gloss])
 
-                if (epoch_id*batch_size + each_batch_train) % 200 == 0:
+                if (epoch_id*batch_size + each_batch_train) % 500 == 0:
                     np.random.shuffle(X_test)
                     X_test_sample = X_test[:sample_size]
                     if model_name == "GAN" or model_name == "WGAN":
@@ -336,8 +333,9 @@ def main(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size, i
                         if not os.path.exists(dir_n):
                             os.mkdir(dir_n)
                         file_n = "samples/" + model_name + "_" + dataset_name + "_" + str(num_hidden) + "_" + str(latent_size) + "_" + str(hidden_layer_size) + \
-                                    "/" + str(epoch_id) + "_" + str(each_batch_train) + ".npy"
+                                    "/" + str(counter) + ".npy"
                         np.save(file_n, sample)
+                        counter += 1
 
                     if if_plot:
                         plt.cla()
@@ -370,10 +368,10 @@ if __name__ == "__main__":
     # main(model_names[1], dataset_names[1], num_hiddens[2], latent_sizes[6], hidden_layer_sizes[1], False, True)
 
     # for hidden_layer_size in hidden_layer_sizes:
-    for num_hidden in num_hiddens:
-        for latent_size in latent_sizes:
-            for model_name in model_names:
-                for dataset_name in dataset_names:
+    for dataset_name in dataset_names:
+        for num_hidden in num_hiddens:
+            for latent_size in latent_sizes:
+                for model_name in model_names:
                     main(model_name, dataset_name, num_hidden, latent_size, 256, False, True)
 
 
