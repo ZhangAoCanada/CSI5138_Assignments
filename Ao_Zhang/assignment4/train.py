@@ -233,7 +233,7 @@ def main(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size, i
 
     # parameters settings
     batch_size = 256
-    epochs = 500
+    epochs = 350
     sample_size = 30
     hm_batches_train = len(X_train) // batch_size    
 
@@ -248,7 +248,6 @@ def main(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size, i
         train_op = model.TrainModel()
 
         summary_loss_1 = tf.summary.scalar(dataset_name + "_" + "loss", loss)
-        # merged_op = tf.summary.merge([summary_loss_1])
     elif model_name == "GAN":
         model = GAN(input_size, num_hidden, hidden_layer_size, latent_size)
         generat_samples = model.Generating()
@@ -257,7 +256,6 @@ def main(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size, i
 
         summary_loss_1 = tf.summary.scalar(dataset_name + "_"  + "loss_D", loss_D)
         summary_loss_2 = tf.summary.scalar(dataset_name + "_"  + "loss_G", loss_G)
-        # merged_op = tf.summary.merge([summary_loss_1, summary_loss_2])
     elif model_name == "WGAN":
         model = WGAN(input_size, num_hidden, hidden_layer_size, latent_size)
         generat_samples = model.Generating()
@@ -267,7 +265,6 @@ def main(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size, i
 
         summary_loss_1 = tf.summary.scalar(dataset_name + "_"  + "loss_D", loss_D)
         summary_loss_2 = tf.summary.scalar(dataset_name + "_"  + "loss_G", loss_G)
-        # merged_op = tf.summary.merge([summary_loss_1, summary_loss_2])
     else:
         raise ValueError("Please input the right model name.")
 
@@ -288,6 +285,7 @@ def main(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size, i
 
         sess.run(init)
         counter = 0
+        step_counter = 0
         for epoch_id in tqdm(range(epochs)):
             np.random.shuffle(X_train)
             for each_batch_train in range(hm_batches_train):
@@ -296,24 +294,26 @@ def main(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size, i
                 if model_name == "VAE":
                     _, loss_vae, sum_l, steps = sess.run([train_op, loss, summary_loss_1, model.global_step], 
                                                         feed_dict={model.X: X_train_batch})
-                    train_writer.add_summary(sum_l, steps)
+                    train_writer.add_summary(sum_l, step_counter)
                     # print([loss_vae])
                 elif model_name == "GAN":
                     for whatever in range(5):
                         _, Dloss = sess.run([train_op_D, loss_D], feed_dict={model.X: X_train_batch, model.Z: GANSampleZ([batch_size, latent_size])})
                     _, Gloss, sum_l_d, sum_l_g, steps = sess.run([train_op_G, loss_G, summary_loss_1, summary_loss_2, model.global_step], \
                                         feed_dict={model.X: X_train_batch, model.Z: GANSampleZ([batch_size, latent_size])})
-                    train_writer.add_summary(sum_l_d, steps)                    
-                    train_writer.add_summary(sum_l_g, steps)                    
+                    train_writer.add_summary(sum_l_d, step_counter)                    
+                    train_writer.add_summary(sum_l_g, step_counter)                    
                     # print([Dloss, Gloss])
                 elif model_name == "WGAN":
                     for whatever in range(5):
                         _, Dloss, clip_d = sess.run([train_op_D, loss_D, clip_D], feed_dict={model.X: X_train_batch, model.Z: GANSampleZ([batch_size, latent_size])})
                     _, Gloss, sum_l_d, sum_l_g, steps = sess.run([train_op_G, loss_G, summary_loss_1, summary_loss_2, model.global_step], \
                                         feed_dict={model.X: X_train_batch, model.Z: GANSampleZ([batch_size, latent_size])})
-                    train_writer.add_summary(sum_l_d, steps)                    
-                    train_writer.add_summary(sum_l_g, steps)  
+                    train_writer.add_summary(sum_l_d, step_counter)                    
+                    train_writer.add_summary(sum_l_g, step_counter)  
                     # print([Dloss, Gloss])
+
+                step_counter += 1
 
                 if (epoch_id*batch_size + each_batch_train) % 500 == 0:
                     np.random.shuffle(X_test)
