@@ -362,7 +362,7 @@ if __name__ == "__main__":
     latent_size = 500
 
     num_hiddens = [0, 1, 2, 3, 4, 5]
-    latent_sizes = [10, 20, 50, 100, 200]
+    latent_sizes = [10, 20, 50, 100]
     hidden_layer_sizes = [128, 256, 512, 1024]
     # debug(model_name, dataset_name, num_hidden, latent_size, True)
     # main(model_names[1], dataset_names[1], num_hiddens[2], latent_sizes[6], hidden_layer_sizes[1], False, True)

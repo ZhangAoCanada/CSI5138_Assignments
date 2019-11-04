@@ -161,6 +161,12 @@ class WGAN:
                                 minimize(-D_loss, global_step = self.global_step, var_list=self.D_variables)
         learning_operation_G = tf.train.RMSPropOptimizer(learning_rate = self.learning_rate).\
                                 minimize(G_loss, global_step = self.global_step, var_list=self.G_variables)
+
+        # learning_operation_D = tf.train.AdamOptimizer(learning_rate = self.learning_rate).\
+        #                         minimize(D_loss, global_step = self.global_step, var_list=self.D_variables)
+        # learning_operation_G = tf.train.AdamOptimizer(learning_rate = self.learning_rate).\
+        #                         minimize(G_loss, global_step = self.global_step, var_list=self.G_variables)
+
         return learning_operation_D, learning_operation_G
 
     def ClipDiscriminatorWeights(self):
