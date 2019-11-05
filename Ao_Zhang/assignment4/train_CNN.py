@@ -10,8 +10,8 @@ import pickle
 from tqdm import tqdm
 
 from VAE import VAE
-from GAN import GAN
-from WGAN import WGAN
+from GAN_CNN import GAN
+# from WGAN_CNN import WGAN
 
 import matplotlib
 matplotlib.use("tkagg")
@@ -183,6 +183,7 @@ def debug(model_name, dataset_name, num_hidden, latent_size, if_plot=False):
             np.random.shuffle(X_train)
             for each_batch_train in range(hm_batches_train):
                 X_train_batch = X_train[each_batch_train*batch_size: (each_batch_train+1)*batch_size]
+                X_train_batch = TransferToImage(X_train_batch)
 
                 if model_name == "VAE":
                     _, loss_vae = sess.run([train_op, loss], feed_dict={model.X: X_train_batch})
@@ -206,8 +207,8 @@ def debug(model_name, dataset_name, num_hidden, latent_size, if_plot=False):
 
                     if dataset_name == "MNIST":
                         sample = sample.reshape((-1, 28, 28))
-                    elif dataset_name == "CIFAR":
-                        sample = TransferToImage(sample)
+                    # elif dataset_name == "CIFAR":
+                    #     sample = TransferToImage(sample)
 
                     if if_plot:
                         plt.cla()
@@ -233,7 +234,7 @@ def main(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size, i
 
     # parameters settings
     batch_size = 256
-    epochs = 1500
+    epochs = 800
     sample_size = 30
     hm_batches_train = len(X_train) // batch_size    
 
@@ -358,20 +359,22 @@ if __name__ == "__main__":
     """
     model_names = ["VAE", "GAN", "WGAN"]
     dataset_names = ["CIFAR"]
-    # num_hidden = 2 # must <= 5
-    # latent_size = 500
+    num_hidden = 0 # must <= 5
+    latent_size = 512
 
-    num_hiddens = [3]
-    latent_sizes = [128, 256, 512, 1024]
-    hidden_layer_sizes = [128, 256, 512, 1024]
-    # debug(model_name, dataset_name, num_hidden, latent_size, True)
+    # num_hiddens = [2, 3]
+    # latent_sizes = [128, 256, 512, 1024]
+    # hidden_layer_sizes = [128, 256, 512, 1024]
+
+    debug("GAN", "CIFAR", num_hidden, latent_size, True)
     # main(model_names[1], dataset_names[1], num_hiddens[2], latent_sizes[6], hidden_layer_sizes[1], False, True)
 
     # for hidden_layer_size in hidden_layer_sizes:
-    for dataset_name in dataset_names:
-        for num_hidden in num_hiddens:
-            for latent_size in latent_sizes:
-                for model_name in model_names:
-                    main(model_name, dataset_name, num_hidden, latent_size, 1024, False, True)
+
+    # for dataset_name in dataset_names:
+    #     for num_hidden in num_hiddens:
+    #         for latent_size in latent_sizes:
+    #             for model_name in model_names:
+    #                 main(model_name, dataset_name, num_hidden, latent_size, 1024, False, True)
 
 

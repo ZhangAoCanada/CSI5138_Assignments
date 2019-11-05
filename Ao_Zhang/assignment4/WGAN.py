@@ -102,17 +102,6 @@ class WGAN:
                         'dec_b_output' : tf.Variable(tf.glorot_uniform_initializer()((self.input_size,))),
                         }
 
-        # self.D_variables = [self.weights['enc_w1'], self.weights['enc_w2'], self.weights['enc_w3'],\
-        #                     self.weights['enc_w4'], self.weights['enc_w5'], self.weights['enc_w6'],\
-        #                     self.weights['enc_w_output'], self.biases['enc_b1'], self.biases['enc_b2'],\
-        #                     self.biases['enc_b3'], self.biases['enc_b4'], self.biases['enc_b5'], \
-        #                     self.biases['enc_b6'], self.biases['enc_b_output']]
-        # self.G_variables = [self.weights['dec_w1'], self.weights['dec_w2'], self.weights['dec_w3'],\
-        #                     self.weights['dec_w4'], self.weights['dec_w5'], self.weights['dec_w6'],\
-        #                     self.weights['dec_w_output'], self.biases['dec_b1'], self.biases['dec_b2'],\
-        #                     self.biases['dec_b3'], self.biases['dec_b4'], self.biases['dec_b5'], \
-        #                     self.biases['dec_b6'], self.biases['dec_b_output']]
-
         self.D_variables = [self.weights[w_var] for w_var in self.weights.keys() if 'enc_' in w_var] + \
                             [self.biases[b_var] for b_var in self.biases.keys() if 'enc_' in b_var]
 

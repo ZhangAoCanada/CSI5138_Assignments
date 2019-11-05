@@ -1,0 +1,134 @@
+##### set specific gpu #####
+import os
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
+
+import numpy as np
+import tensorflow as tf
+
+# mnist 784
+# cifa 3072
+class GAN:
+    def __init__(self, input_size, num_hidden_layers, hidden_layer_size, 
+                latent_size, dropout = False, BN = False):
+        assert isinstance(input_size, int)
+        assert isinstance(num_hidden_layers, int)
+        assert isinstance(latent_size, int)
+        if num_hidden_layers > 5:
+            raise ValueError("Maximum 5 hidden layers, no more.")
+        self.input_size = input_size
+        self.num_hidden_layers = num_hidden_layers
+        self.latent_size = latent_size
+        self.hidden_layer_size = hidden_layer_size
+        self.X = tf.placeholder(tf.float32, shape = [None, 32, 32, 3])
+        self.Z = tf.placeholder(tf.float32, shape = [None, self.latent_size])
+
+        self.global_step = tf.Variable(0, trainable=False)
+        self.learning_rate_start = 0.001
+        self.learning_rate = tf.train.exponential_decay(self.learning_rate_start, self.global_step, \
+                                                        3000, 0.96, staircase=True)
+
+        self.dropout = dropout
+        self.BN = BN
+        self.dropout_rate = 0.2
+
+        self.weights = {
+                        'enc_initial' : tf.Variable(tf.glorot_uniform_initializer()([3, 3, 3, self.hidden_layer_size // 2])),
+                        'enc_k1' : tf.Variable(tf.glorot_uniform_initializer()([3, 3, self.hidden_layer_size // 2, self.hidden_layer_size])),
+                        'enc_k2' : tf.Variable(tf.glorot_uniform_initializer()([3, 3, self.hidden_layer_size, self.hidden_layer_size])),
+                        'enc_k3' : tf.Variable(tf.glorot_uniform_initializer()([3, 3, self.hidden_layer_size, self.hidden_layer_size])),
+                        'enc_k4' : tf.Variable(tf.glorot_uniform_initializer()([3, 3, self.hidden_layer_size, self.hidden_layer_size])),
+                        'enc_w_output' : tf.Variable(tf.glorot_uniform_initializer()([self.hidden_layer_size*32*32, 1])),
+
+                        'dec_upsize' : tf.Variable(tf.glorot_uniform_initializer()([self.latent_size, 32*32])),                        
+                        'dec_k1' : tf.Variable(tf.glorot_uniform_initializer()([3, 3, 1, self.hidden_layer_size])),
+                        'dec_k2' : tf.Variable(tf.glorot_uniform_initializer()([3, 3, self.hidden_layer_size, self.hidden_layer_size])),
+                        'dec_k3' : tf.Variable(tf.glorot_uniform_initializer()([3, 3, self.hidden_layer_size, self.hidden_layer_size])),
+                        'dec_k4' : tf.Variable(tf.glorot_uniform_initializer()([3, 3, self.hidden_layer_size, self.hidden_layer_size])),
+                        'dec_w_output' : tf.Variable(tf.glorot_uniform_initializer()([3, 3, self.hidden_layer_size, 3])),
+                        }
+        self.biases = {
+                        'dec_upsize' : tf.Variable(tf.glorot_uniform_initializer()((32*32,))),
+                        'enc_b_output' : tf.Variable(tf.glorot_uniform_initializer()((1,))),
+                        'dec_b_output' : tf.Variable(tf.glorot_uniform_initializer()((self.input_size,))),
+                        }
+
+        self.D_variables = [self.weights[w_var] for w_var in self.weights.keys() if 'enc_' in w_var] + \
+                            [self.biases[b_var] for b_var in self.biases.keys() if 'enc_' in b_var]
+
+        self.G_variables = [self.weights[w_var] for w_var in self.weights.keys() if 'dec_' in w_var] + \
+                            [self.biases[b_var] for b_var in self.biases.keys() if 'dec_' in b_var]
+
+    def ConvolutionalLayer(self, input_data, kernel):
+        """
+        Function:
+            Define convolutional layer.
+        """
+        layer = tf.nn.conv2d(input_data, kernel, strides = [1,1,1,1], padding = "SAME")
+        if self.BN:
+            layer = tf.layers.BatchNormalization()(layer)
+        layer = tf.nn.relu(layer)
+        return layer
+
+    def LastLayer(self, input_data, kernel):
+        """
+        Function:
+            Define convolutional layer.
+        """
+        layer = tf.nn.conv2d(input_data, kernel, strides = [1,1,1,1], padding = "SAME")
+        return layer
+
+    def Discriminator(self, input_x):
+        hidden = self.ConvolutionalLayer(input_x, self.weights['enc_initial'])
+        hidden = self.ConvolutionalLayer(hidden, self.weights['enc_k1'])
+        if self.num_hidden_layers != 0:
+            for i in range(self.num_hidden_layers):
+                w_name = 'enc_k' + str(i + 2)
+                hidden = self.ConvolutionalLayer(hidden, self.weights[w_name])
+        dim = tf.reduce_prod(tf.shape(hidden)[1:])
+        hidden = tf.reshape(hidden, [-1, dim])
+        logits = tf.add(tf.matmul(hidden, self.weights['enc_w_output']), self.biases['enc_b_output'])   
+        prob = tf.nn.sigmoid(logits)
+        return logits, prob
+
+    def Generator(self, input_z):
+        hidden = tf.nn.relu(tf.add(tf.matmul(input_z, self.weights['dec_upsize']), self.biases['dec_upsize']))
+        hidden = tf.reshape(hidden, [-1, 32, 32, 1])
+        hidden = self.ConvolutionalLayer(hidden, self.weights['dec_k1'])
+        if self.num_hidden_layers != 0:
+            for i in range(self.num_hidden_layers):
+                w_name = 'dec_k' + str(i + 2)
+                hidden = self.ConvolutionalLayer(hidden, self.weights[w_name])
+        logits = self.LastLayer(hidden, self.weights["dec_w_output"])
+        prob = tf.nn.sigmoid(logits)
+        return prob
+
+    def Generating(self,):
+        sample = self.Generator(self.Z)
+        return sample
+
+    def VarInitializer(self, size):
+        in_dim = size[0]
+        xavier_stddev = 1. / tf.sqrt(in_dim / 2.)
+        return tf.random_normal(shape=size, stddev=xavier_stddev)
+
+    def Loss(self, return_loss_only = True):
+        G_sample = self.Generator(self.Z)
+        D_logit_real, D_real_prob= self.Discriminator(self.X)
+        D_logit_fake, D_fake_prob = self.Discriminator(G_sample)
+        D_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_real, labels=tf.ones_like(D_logit_real)))
+        D_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_fake, labels=tf.zeros_like(D_logit_fake)))
+        D_loss = D_loss_real + D_loss_fake
+        G_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_fake, labels=tf.ones_like(D_logit_fake)))
+        return D_loss, G_loss
+
+    def TrainModel(self):
+        D_loss, G_loss = self.Loss()
+        learning_operation_D = tf.train.AdamOptimizer(learning_rate = self.learning_rate).\
+                                minimize(D_loss, global_step = self.global_step, var_list=self.D_variables)
+        learning_operation_G = tf.train.AdamOptimizer(learning_rate = self.learning_rate).\
+                                minimize(G_loss, global_step = self.global_step, var_list=self.G_variables)
+        # learning_operation_D = tf.train.AdamOptimizer().minimize(D_loss, var_list=self.D_variables)
+        # learning_operation_G = tf.train.AdamOptimizer().minimize(G_loss, var_list=self.G_variables)
+
+        return learning_operation_D, learning_operation_G
