@@ -26,7 +26,7 @@ class GAN:
         self.global_step = tf.Variable(0, trainable=False)
         self.learning_rate_start = 0.001
         self.learning_rate = tf.train.exponential_decay(self.learning_rate_start, self.global_step, \
-                                                        3000, 0.96, staircase=True)
+                                                        2000, 0.96, staircase=True)
 
         self.dropout = dropout
         self.BN = BN

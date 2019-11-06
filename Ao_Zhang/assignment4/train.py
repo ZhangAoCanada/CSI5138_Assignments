@@ -356,14 +356,14 @@ if __name__ == "__main__":
         "MNIST"
         "CIFAR"
     """
-    model_names = ["VAE", "GAN", "WGAN"]
+    model_names = ["WGAN"]
     dataset_names = ["CIFAR"]
     # num_hidden = 2 # must <= 5
     # latent_size = 500
 
-    num_hiddens = [3]
-    latent_sizes = [128, 256, 512, 1024]
-    hidden_layer_sizes = [128, 256, 512, 1024]
+    num_hiddens = [0]
+    latent_sizes = [1024]
+    hidden_layer_sizes = [1024]
     # debug(model_name, dataset_name, num_hidden, latent_size, True)
     # main(model_names[1], dataset_names[1], num_hiddens[2], latent_sizes[6], hidden_layer_sizes[1], False, True)
 
