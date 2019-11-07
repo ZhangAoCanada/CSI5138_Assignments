@@ -26,81 +26,81 @@ class GAN:
         self.global_step = tf.Variable(0, trainable=False)
         self.learning_rate_start = 0.001
         self.learning_rate = tf.train.exponential_decay(self.learning_rate_start, self.global_step, \
-                                                        2000, 0.96, staircase=True)
+                                                        50000, 0.96, staircase=True)
 
         self.dropout = dropout
         self.BN = BN
         self.dropout_rate = 0.2
 
-        # self.weights = {
-        #                 'enc_w1' : tf.Variable(self.VarInitializer((self.input_size, self.hidden_layer_size))),
-        #                 'enc_w2' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
-        #                 'enc_w3' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
-        #                 'enc_w4' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
-        #                 'enc_w5' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
-        #                 'enc_w6' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
-        #                 'enc_w_output' : tf.Variable(self.VarInitializer((self.hidden_layer_size, 1))),
-
-        #                 'dec_w1' : tf.Variable(self.VarInitializer((self.latent_size, self.hidden_layer_size))),
-        #                 'dec_w2' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
-        #                 'dec_w3' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
-        #                 'dec_w4' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
-        #                 'dec_w5' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
-        #                 'dec_w6' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
-        #                 'dec_w_output' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.input_size))),
-        #                 }
-        # self.biases = {
-        #                 'enc_b1' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
-        #                 'enc_b2' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
-        #                 'enc_b3' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
-        #                 'enc_b4' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
-        #                 'enc_b5' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
-        #                 'enc_b6' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
-        #                 'enc_b_output' : tf.Variable(tf.zeros((1,))),
-
-        #                 'dec_b1' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
-        #                 'dec_b2' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
-        #                 'dec_b3' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
-        #                 'dec_b4' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
-        #                 'dec_b5' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
-        #                 'dec_b6' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
-        #                 'dec_b_output' : tf.Variable(tf.zeros((self.input_size,))),
-        #                 }
-
         self.weights = {
-                        'enc_w1' : tf.Variable(tf.glorot_uniform_initializer()((self.input_size, self.hidden_layer_size))),
-                        'enc_w2' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
-                        'enc_w3' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
-                        'enc_w4' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
-                        'enc_w5' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
-                        'enc_w6' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
-                        'enc_w_output' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, 1))),
+                        'enc_w1' : tf.Variable(self.VarInitializer((self.input_size, self.hidden_layer_size))),
+                        'enc_w2' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+                        'enc_w3' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+                        'enc_w4' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+                        'enc_w5' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+                        'enc_w6' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+                        'enc_w_output' : tf.Variable(self.VarInitializer((self.hidden_layer_size, 1))),
 
-                        'dec_w1' : tf.Variable(tf.glorot_uniform_initializer()((self.latent_size, self.hidden_layer_size))),
-                        'dec_w2' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
-                        'dec_w3' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
-                        'dec_w4' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
-                        'dec_w5' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
-                        'dec_w6' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
-                        'dec_w_output' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.input_size))),
+                        'dec_w1' : tf.Variable(self.VarInitializer((self.latent_size, self.hidden_layer_size))),
+                        'dec_w2' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+                        'dec_w3' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+                        'dec_w4' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+                        'dec_w5' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+                        'dec_w6' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.hidden_layer_size))),
+                        'dec_w_output' : tf.Variable(self.VarInitializer((self.hidden_layer_size, self.input_size))),
                         }
         self.biases = {
-                        'enc_b1' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
-                        'enc_b2' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
-                        'enc_b3' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
-                        'enc_b4' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
-                        'enc_b5' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
-                        'enc_b6' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
-                        'enc_b_output' : tf.Variable(tf.glorot_uniform_initializer()((1,))),
+                        'enc_b1' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+                        'enc_b2' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+                        'enc_b3' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+                        'enc_b4' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+                        'enc_b5' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+                        'enc_b6' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+                        'enc_b_output' : tf.Variable(tf.zeros((1,))),
 
-                        'dec_b1' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
-                        'dec_b2' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
-                        'dec_b3' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
-                        'dec_b4' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
-                        'dec_b5' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
-                        'dec_b6' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
-                        'dec_b_output' : tf.Variable(tf.glorot_uniform_initializer()((self.input_size,))),
+                        'dec_b1' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+                        'dec_b2' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+                        'dec_b3' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+                        'dec_b4' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+                        'dec_b5' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+                        'dec_b6' : tf.Variable(tf.zeros((self.hidden_layer_size,))),
+                        'dec_b_output' : tf.Variable(tf.zeros((self.input_size,))),
                         }
+
+        # self.weights = {
+        #                 'enc_w1' : tf.Variable(tf.glorot_uniform_initializer()((self.input_size, self.hidden_layer_size))),
+        #                 'enc_w2' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'enc_w3' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'enc_w4' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'enc_w5' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'enc_w6' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'enc_w_output' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, 1))),
+
+        #                 'dec_w1' : tf.Variable(tf.glorot_uniform_initializer()((self.latent_size, self.hidden_layer_size))),
+        #                 'dec_w2' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'dec_w3' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'dec_w4' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'dec_w5' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'dec_w6' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.hidden_layer_size))),
+        #                 'dec_w_output' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size, self.input_size))),
+        #                 }
+        # self.biases = {
+        #                 'enc_b1' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
+        #                 'enc_b2' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
+        #                 'enc_b3' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
+        #                 'enc_b4' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
+        #                 'enc_b5' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
+        #                 'enc_b6' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
+        #                 'enc_b_output' : tf.Variable(tf.glorot_uniform_initializer()((1,))),
+
+        #                 'dec_b1' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
+        #                 'dec_b2' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
+        #                 'dec_b3' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
+        #                 'dec_b4' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
+        #                 'dec_b5' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
+        #                 'dec_b6' : tf.Variable(tf.glorot_uniform_initializer()((self.hidden_layer_size,))),
+        #                 'dec_b_output' : tf.Variable(tf.glorot_uniform_initializer()((self.input_size,))),
+        #                 }
 
         self.D_variables = [self.weights[w_var] for w_var in self.weights.keys() if 'enc_' in w_var] + \
                             [self.biases[b_var] for b_var in self.biases.keys() if 'enc_' in b_var]

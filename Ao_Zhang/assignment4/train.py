@@ -233,7 +233,7 @@ def main(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size, i
 
     # parameters settings
     batch_size = 256
-    epochs = 1500
+    epochs = 1000
     sample_size = 30
     hm_batches_train = len(X_train) // batch_size    
 
@@ -361,8 +361,8 @@ if __name__ == "__main__":
     # num_hidden = 2 # must <= 5
     # latent_size = 500
 
-    num_hiddens = [0]
-    latent_sizes = [1024]
+    num_hiddens = [2, 3, 4]
+    latent_sizes = [256, 512, 1024]
     hidden_layer_sizes = [1024]
     # debug(model_name, dataset_name, num_hidden, latent_size, True)
     # main(model_names[1], dataset_names[1], num_hiddens[2], latent_sizes[6], hidden_layer_sizes[1], False, True)
