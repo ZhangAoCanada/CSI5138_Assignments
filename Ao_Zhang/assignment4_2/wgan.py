@@ -72,13 +72,11 @@ class gan(object):
         return model
 
     def DiscriminatorLoss(self, real_output, fake_output):
-        real_loss = self.crossEntropy(tf.ones_like(real_output), real_output)
-        fake_loss = self.crossEntropy(tf.zeros_like(fake_output), fake_output)
-        total_loss = real_loss + fake_loss
-        return total_loss
+        loss = tf.reduce_mean(real_output) - tf.reduce_mean(fake_output)
+        return loss
 
     def GeneratorLoss(self, fake_output):
-        return self.crossEntropy(tf.ones_like(fake_output), fake_output)
+        return - tf.reduce_mean(fake_output)
 
     @tf.function
     def Training(self, images):
@@ -96,9 +94,16 @@ class gan(object):
         gradients_of_generator = gen_tape.gradient(gen_loss, self.gen.trainable_variables)
         gradients_of_discriminator = disc_tape.gradient(disc_loss, self.disc.trainable_variables)
 
-        self.gen_optimizer.apply_gradients(zip(gradients_of_generator, self.gen.trainable_variables))
+        for _ in range(5):
+            self.gen_optimizer.apply_gradients(zip(gradients_of_generator, self.gen.trainable_variables))
+            self.ClipDiscWeights()
+
         self.disc_optimizer.apply_gradients(zip(gradients_of_discriminator, self.disc.trainable_variables))
 
         return gen_loss, disc_loss
+
+    def ClipDiscWeights(self):
+        for var in self.gen.trainable_variables:
+            var.assign(tf.clip_by_value(var, -0.01, 0.01))
 
 
