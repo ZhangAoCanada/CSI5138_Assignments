@@ -48,7 +48,7 @@ class GAN:
 
     def Conv(self, x, output_dim, stride=1, name="conv2d"):
         with tf.variable_scope(name):
-            k = tf.get_variable('kernel', [3, 3, x.get_shape()[-1], output_dim],
+            k = tf.get_variable('kernel', [5, 5, x.get_shape()[-1], output_dim],
                         dtype=tf.float32 ,initializer=tf.glorot_uniform_initializer())
             layer = tf.nn.conv2d(x, k, strides=[1, stride, stride, 1], padding='SAME')
             biases = tf.get_variable('biases', [output_dim], initializer=tf.constant_initializer(0.0))
@@ -57,7 +57,7 @@ class GAN:
 
     def Deconv(self, x, output_dim, stride=1, name="deconv2d"):
         with tf.variable_scope(name):
-            k = tf.get_variable('kernel', [3, 3, output_dim, x.get_shape()[-1]],
+            k = tf.get_variable('kernel', [5, 5, output_dim, x.get_shape()[-1]],
                         dtype=tf.float32 ,initializer=tf.glorot_uniform_initializer())
             input_shape = x.get_shape().as_list()
             output_shape = tf.constant([self.batch_size, input_shape[1]*stride, \

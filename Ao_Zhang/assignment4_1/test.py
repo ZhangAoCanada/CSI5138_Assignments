@@ -1,6 +1,6 @@
 import os
-os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
+# os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+# os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
 import numpy as np
 import tensorflow as tf
@@ -8,8 +8,8 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 from gan import GAN
 from wgan import WGAN
-import matplotlib
-matplotlib.use("tkagg")
+# import matplotlib
+# matplotlib.use("tkagg")
 import matplotlib.pyplot as plt
 import pickle
 from tqdm import tqdm
@@ -120,7 +120,7 @@ def GANSampleZ(size):
     """
     return np.random.uniform(-1., 1., size=size)
 
-def debug(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_save=True):
+def debug(model_name, dataset_name, num_hidden, latent_size, if_plot=True, if_save=False):
     """
     Function:
         For debugging.
@@ -194,7 +194,7 @@ def debug(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
                     _, Gloss = sess.run([op_G, G_loss], feed_dict={model.Z: GANSampleZ([batch_size, latent_size])})
                     print([Dloss, Gloss])
 
-                if (epoch_id*batch_size + each_batch_train) % 20 == 0:
+                if (epoch_id*batch_size + each_batch_train) % 50 == 0:
                     if model_name == "GAN" or model_name == "WGAN":
                         sample = sess.run(generat_samples, feed_dict={model.Z: GANSampleZ([batch_size, latent_size])})
                     elif model_name == "VAE":
@@ -209,11 +209,26 @@ def debug(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
                         np.save(file_n, sample)
                         counter += 1
 
+                    current_samples = sample[:200]
+                    if dataset_name == "MNIST":
+                        current_samples = current_samples.reshape((10, 20, 28, 28))
+                    else:
+                        current_samples = current_samples.reshape((10, 20, 32, 32, 3))
+
+                    all_imgs = []
+                    for i in range(3):
+                        row_imgs = []
+                        for j in range(10):
+                            row_imgs.append(current_samples[i, j])
+                        row_imgs = np.concatenate(row_imgs, axis = 1)
+                        all_imgs.append(row_imgs)
+                    all_imgs = np.concatenate(all_imgs, axis = 0)   
+
                     if if_plot:
                         plt.cla()
                         ax.clear()
                         # ax.imshow(np.squeeze(sample))
-                        ax.imshow(sample[0])
+                        ax.imshow(all_imgs)
                         fig.canvas.draw()
                         plt.pause(0.01)
 
@@ -232,4 +247,4 @@ if __name__ == '__main__':
     # gan = GAN()
     # gan.train(X_train, epochs=30000, batch_size=32, sample_interval=200)
 
-    debug("GAN", "CIFAR", 0, 256)
+    debug("GAN", "CIFAR", 1, 128)
