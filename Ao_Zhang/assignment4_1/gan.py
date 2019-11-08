@@ -25,7 +25,7 @@ class GAN:
         self.global_step = tf.Variable(0, trainable=False)
         self.learning_rate_start = 0.001
         self.learning_rate = tf.train.exponential_decay(self.learning_rate_start, self.global_step, \
-                                                        500, 0.96, staircase=True)
+                                                        10000, 0.96, staircase=True)
 
         self.dropout = dropout
         self.BN = BN
@@ -71,6 +71,7 @@ class GAN:
     def ConvBlock(self, x, output_dim, count, stride=1):
         name = 'l' + str(count)
         layer = self.Conv(x, output_dim, stride, name)
+        layer = tf.keras.layers.BatchNormalization(trainable=False)(layer)
         # layer = tf.nn.relu(layer)
         layer = tf.nn.leaky_relu(layer, alpha=0.2)
         return layer
@@ -78,6 +79,7 @@ class GAN:
     def DeconvBlock(self, x, output_dim, count, stride=1):
         name = 'l' + str(count)
         layer = self.Deconv(x, output_dim, stride, name)
+        layer = tf.keras.layers.BatchNormalization(trainable=False)(layer)
         # layer = tf.nn.relu(layer)
         layer = tf.nn.leaky_relu(layer, alpha=0.2)
         return layer
@@ -108,15 +110,15 @@ class GAN:
             count = 0
             layer = self.ConvBlock(input_x, 32, count=count)
             count += 1
-            layer = self.ConvBlock(layer, self.hidden_size // 2, count=count)
+            layer = self.ConvBlock(layer, self.hidden_size // 4, count=count)
             count += 1
             if self.num_hidden_layers >= 1:
-                layer = self.ConvBlock(layer, self.hidden_size // 2, count=count)
+                layer = self.ConvBlock(layer, self.hidden_size // 4, count=count)
                 count += 1
-            layer = self.ConvBlock(layer, self.hidden_size, count=count, stride=2)
+            layer = self.ConvBlock(layer, self.hidden_size // 2, count=count, stride=2)
             count += 1
             if self.num_hidden_layers >= 2:
-                layer = self.ConvBlock(layer, self.hidden_size, count=count)
+                layer = self.ConvBlock(layer, self.hidden_size // 2, count=count)
                 count += 1
             layer = self.ConvBlock(layer, self.hidden_size, count=count, stride=2)
             count += 1
@@ -156,7 +158,11 @@ class GAN:
     def Loss(self,):
         G_sample = self.Generator(self.Z)
         D_logit_real, D_real_prob= self.Discriminator(self.X, reuse=False)
+        print("-------------------")
+        print(len(tf.trainable_variables()))
         D_logit_fake, D_fake_prob = self.Discriminator(G_sample, reuse=True)
+        print("-------------------")
+        print(len(tf.trainable_variables()))
         D_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_real, labels=tf.ones_like(D_logit_real)))
         D_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=D_logit_fake, labels=tf.zeros_like(D_logit_fake)))
         D_loss = D_loss_real + D_loss_fake

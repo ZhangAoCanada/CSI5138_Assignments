@@ -63,12 +63,12 @@ if __name__ == "__main__":
         "MNIST"
         "CIFAR"
     """
-    model_name = "WGAN"
+    model_name = "GAN"
     dataset_name = "CIFAR"
 
     num_hidden = 0
-    latent_size = 512
-    hidden_layer_size = 1024
+    latent_size = 256
+    hidden_layer_size = 128
 
     ReadAllSamples(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size)
 

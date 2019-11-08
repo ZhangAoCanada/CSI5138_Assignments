@@ -141,7 +141,7 @@ def debug(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
     batch_size = 256
     epochs = 10000
     hm_batches_train = len(X_train) // batch_size
-    hidden_layer_size = 128 # feel free to tune
+    hidden_layer_size = 256 # feel free to tune
 
     if model_name == "VAE":
         aaaaa = 0
@@ -194,7 +194,7 @@ def debug(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
                     _, Gloss = sess.run([op_G, G_loss], feed_dict={model.Z: GANSampleZ([batch_size, latent_size])})
                     print([Dloss, Gloss])
 
-                if (epoch_id*batch_size + each_batch_train) % 500 == 0:
+                if (epoch_id*batch_size + each_batch_train) % 20 == 0:
                     if model_name == "GAN" or model_name == "WGAN":
                         sample = sess.run(generat_samples, feed_dict={model.Z: GANSampleZ([batch_size, latent_size])})
                     elif model_name == "VAE":

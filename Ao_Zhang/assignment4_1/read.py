@@ -29,10 +29,11 @@ def ReadAllSamples(model_name, dataset_name, num_hidden, latent_size, hidden_lay
         file_n = "samples/" + model_name + "_" + dataset_name + "_" + str(num_hidden) + \
                     "_" + str(latent_size) + "_" + str(hidden_layer_size) + "/" + str(file_id) + ".npy"
         current_samples = ReadSamples(file_n)
+        current_samples = current_samples[:200]
         if dataset_name == "MNIST":
-            current_samples = current_samples.reshape((3, 10, 28, 28))
+            current_samples = current_samples.reshape((10, 20, 28, 28))
         else:
-            current_samples = current_samples.reshape((3, 10, 32, 32, 3))
+            current_samples = current_samples.reshape((10, 20, 32, 32, 3))
 
         all_imgs = []
         for i in range(3):
@@ -63,12 +64,12 @@ if __name__ == "__main__":
         "MNIST"
         "CIFAR"
     """
-    model_name = "WGAN"
+    model_name = "GAN"
     dataset_name = "CIFAR"
 
     num_hidden = 0
-    latent_size = 512
-    hidden_layer_size = 1024
+    latent_size = 256
+    hidden_layer_size = 128
 
     ReadAllSamples(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size)
 
