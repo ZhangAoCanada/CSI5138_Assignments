@@ -9,9 +9,10 @@ from tensorflow.keras import layers
 import time
 
 
-class vae(object):
+class vae(tf.keras.Model):
     def __init__(self, input_size, num_hidden_layers, hidden_layer_size, 
                 latent_size, batch_size):
+        super(vae, self).__init__()
         self.input_size = input_size
         self.w, self.h, self.ch_in = self.input_size
         self.num_layers = num_hidden_layers
@@ -30,6 +31,7 @@ class vae(object):
                                                 decay_rate=0.96,
                                                 staircase=True)
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr_schedule)
+        self.trainable_var = self.dec.trainable_variables + self.enc.trainable_variables
 
     def SampleLatent(self, mean, variance):
         eps = tf.random.normal(shape = tf.shape(mean))
@@ -54,7 +56,7 @@ class vae(object):
             model.add(layers.BatchNormalization())
             model.add(layers.LeakyReLU())
 
-        model.add(layers.Conv2DTranspose(self.hidden_size//4, (5, 5), strides=(2, 2), padding='same', use_bias=False))
+        model.add(layers.Conv2DTranspose(self.hidden_size//4, (3, 3), strides=(2, 2), padding='same', use_bias=False))
         assert model.output_shape == (None, self.w//2, self.h//2, self.hidden_size//4)
         model.add(layers.BatchNormalization())
         model.add(layers.LeakyReLU())
@@ -64,78 +66,85 @@ class vae(object):
             model.add(layers.BatchNormalization())
             model.add(layers.LeakyReLU())
 
-        model.add(layers.Conv2DTranspose(self.ch_in, (5, 5), strides=(2, 2), padding='same', use_bias=False, activation='tanh'))
+        model.add(layers.Conv2DTranspose(self.ch_in, (3, 3), strides=(2, 2), padding='same', use_bias=False))
         assert model.output_shape == (None, self.w, self.h, self.ch_in)
 
         return model
 
     def Encoder(self,):
-        X = tf.keras.Input(shape = [self.w, self.h, self.ch_in])
+        model = tf.keras.Sequential()
 
-        hidden = layers.Conv2D(self.hidden_size//4, (3, 3), strides=(1, 1), padding='same')(X)
-        hidden = layers.LeakyReLU()(hidden)
-        hidden = layers.Dropout(0.3)(hidden)
+        model.add(layers.Conv2D(self.hidden_size//4, (3, 3), strides=(1, 1), padding='same',
+                                        input_shape=[self.w, self.h, self.ch_in]))
+        model.add(layers.LeakyReLU())
+        model.add(layers.Dropout(0.3))
 
         if self.num_layers >= 1:
-            hidden = layers.Conv2D(self.hidden_size//4, (3, 3), strides=(1, 1), padding='same')(hidden)
-            hidden = layers.LeakyReLU()(hidden)
-            hidden = layers.Dropout(0.3)(hidden)
+            model.add(layers.Conv2D(self.hidden_size//4, (3, 3), strides=(1, 1), padding='same'))
+            model.add(layers.LeakyReLU())
+            model.add(layers.Dropout(0.3))
 
-        hidden = layers.Conv2D(self.hidden_size//2, (5, 5), strides=(2, 2), padding='same')(hidden)
-        hidden = layers.LeakyReLU()(hidden)
-        hidden = layers.Dropout(0.3)(hidden)
+        model.add(layers.Conv2D(self.hidden_size//2, (3, 3), strides=(2, 2), padding='same'))
+        model.add(layers.LeakyReLU())
+        model.add(layers.Dropout(0.3))
 
         if self.num_layers >= 2:
-            hidden = layers.Conv2D(self.hidden_size//2, (3, 3), strides=(1, 1), padding='same')(hidden)
-            hidden = layers.LeakyReLU()(hidden)
-            hidden = layers.Dropout(0.3)(hidden)
+            model.add(layers.Conv2D(self.hidden_size//2, (3, 3), strides=(1, 1), padding='same'))
+            model.add(layers.LeakyReLU())
+            model.add(layers.Dropout(0.3))
 
-        hidden = layers.Conv2D(self.hidden_size, (5, 5), strides=(2, 2), padding='same')(hidden)
-        hidden = layers.LeakyReLU()(hidden)
-        hidden = layers.Dropout(0.3)(hidden)
+        model.add(layers.Conv2D(self.hidden_size, (3, 3), strides=(2, 2), padding='same'))
+        model.add(layers.LeakyReLU())
+        model.add(layers.Dropout(0.3))
 
         if self.num_layers >= 3:
-            hidden = layers.Conv2D(self.hidden_size, (3, 3), strides=(1, 1), padding='same')(hidden)
-            hidden = layers.LeakyReLU()(hidden)
-            hidden = layers.Dropout(0.3)(hidden)
+            model.add(layers.Conv2D(self.hidden_size, (3, 3), strides=(1, 1), padding='same'))
+            model.add(layers.LeakyReLU())
+            model.add(layers.Dropout(0.3))
 
-        hidden = layers.Flatten()(hidden)
+        model.add(layers.Flatten())
+        model.add(layers.Dense(2 * self.latent_size))
 
-        mean = layers.Dense(self.latent_size)(hidden)
-        variance = layers.Dense(self.latent_size)(hidden)
+        return model
+    
+    def Encoding(self, x):
+        mean, logvar = tf.split(self.enc(x), num_or_size_splits=2, axis=1)
+        return mean, logvar
 
-        return tf.keras.Model(X, [mean, variance])
+    def Reparameterize(self, mean, logvar):
+        eps = tf.random.normal(shape=mean.shape)
+        return eps * tf.exp(logvar * .5) + mean
 
-    def ReconstructionLoss(self, production, real):
-        # prod = layers.Flatten()(production)
-        # r = layers.Flatten()(real)
-        real_loss = self.crossEntropy(real, production)
-        return real_loss
+    def Decoding(self, z, apply_sigmoid=False):
+        logits = self.dec(z)
+        if apply_sigmoid:
+            probs = tf.sigmoid(logits)
+            return probs
+        return logits
 
-    def KLDLoss(self, mean, variance):
-        KL_loss = 0.5 * tf.reduce_sum(tf.exp(variance) + tf.square(mean) - 1. - variance, axis=1)
-        return tf.reduce_sum(KL_loss)
+    def LogNormalPdf(self, sample, mean, logvar, raxis=1):
+        log2pi = tf.math.log(2. * np.pi)
+        return tf.reduce_sum( -.5 * ((sample - mean) ** 2. \
+                            * tf.exp(-logvar) + logvar + log2pi), axis=raxis)
+
+    # @tf.function
+    def Loss(self, x):
+        mean, logvar = self.Encoding(x)
+        z = self.Reparameterize(mean, logvar)
+        x_logit = self.Decoding(z)
+
+        cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(logits=x_logit, labels=x)
+        logpx_z = -tf.reduce_sum(cross_entropy, axis=[1, 2, 3])
+        logpz = self.LogNormalPdf(z, 0., 0.)
+        logqz_x = self.LogNormalPdf(z, mean, logvar)
+        return -tf.reduce_mean(logpx_z + logpz - logqz_x)
 
     @tf.function
-    def Training(self, images):
-        
+    def Training(self, x):
         with tf.GradientTape() as tape:
-            mean, variance = self.enc(images)
-
-            sample_latent = self.SampleLatent(mean, variance)
-            produced_img = self.dec(sample_latent)
-
-            reconstruct_loss = self.ReconstructionLoss(produced_img, images)
-            kl_loss = self.KLDLoss(mean, variance)
-            
-            total_loss = reconstruct_loss + kl_loss
-
-            all_variables = self.dec.trainable_variables + self.enc.trainable_variables
-
-        gradients = tape.gradient(total_loss, all_variables)
-
-        self.optimizer.apply_gradients(zip(gradients, all_variables))
-
-        return total_loss
+            loss = self.Loss(x)
+        gradients = tape.gradient(loss, self.trainable_var)
+        self.optimizer.apply_gradients(zip(gradients, self.trainable_var))
+        return loss
 
 

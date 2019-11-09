@@ -1,11 +1,11 @@
 ##### set specific gpu #####
 import os
-os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
+# os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+# os.environ["CUDA_VISIBLE_DEVICES"]="1"
 import tensorflow as tf
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
-assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
-tf.config.experimental.set_memory_growth(physical_devices[0], True)
+# physical_devices = tf.config.experimental.list_physical_devices('GPU')
+# assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
+# tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 import glob
 import imageio
@@ -198,12 +198,13 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
         np.random.shuffle(X_train)
         for each_batch_train in range(hm_batches_train):
             X_train_batch = X_train[each_batch_train*batch_size: (each_batch_train+1)*batch_size]
-            X_train_batch = (X_train_batch - 0.5) / 0.5
+
+            if model_name == "GAN":
+                X_train_batch = (X_train_batch - 0.5) / 0.5
 
             if model_name == "VAE":
                 v_loss = model.Training(X_train_batch)
-                print('------------------------')
-                print(v_loss.numpy().shape)
+                print(v_loss)
             else:
                 g_loss, d_loss = model.Training(X_train_batch)
             
@@ -216,11 +217,12 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
 
             if (epoch_id*batch_size + each_batch_train) % 100 == 0:
                 if model_name == "VAE":
-                    samples = model.dec(seed, training=False)
+                    samples = model.Decoding(seed, apply_sigmoid=True)
                 else:
                     samples = model.gen(seed, training=False)
                 samples = samples.numpy()
-                samples = 0.5 * samples + 0.5
+                if model_name == "GAN":
+                    samples = 0.5 * samples + 0.5
 
                 if if_save:
                     dir_n = "samples/" + model_name + "_" + dataset_name + "_" + str(num_hidden) + "_" + str(latent_size) + "_" + str(hidden_layer_size)
@@ -246,4 +248,4 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
 
 
 if __name__ == "__main__":
-    train("GAN", "CIFAR", 0, 100)
+    train("VAE", "CIFAR", 0, 100)
