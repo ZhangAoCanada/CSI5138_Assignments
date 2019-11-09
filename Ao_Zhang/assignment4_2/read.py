@@ -25,7 +25,7 @@ def ReadAllSamples(model_name, dataset_name, num_hidden, latent_size, hidden_lay
 
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
-    for file_id in range(200, num_files):
+    for file_id in range(400, num_files):
         file_n = "samples/" + model_name + "_" + dataset_name + "_" + str(num_hidden) + \
                     "_" + str(latent_size) + "_" + str(hidden_layer_size) + "/" + str(file_id) + ".npy"
         current_samples = ReadSamples(file_n)
@@ -49,7 +49,7 @@ def ReadAllSamples(model_name, dataset_name, num_hidden, latent_size, hidden_lay
         ax1.axis("off")
         ax1.set_title(str(file_id))
         fig.canvas.draw()
-        plt.pause(0.5)
+        plt.pause(0.1)
 
 
 
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     dataset_name = "CIFAR"
 
     num_hidden = 0
-    latent_size = 200
+    latent_size = 45
     hidden_layer_size = 256
 
     ReadAllSamples(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size)

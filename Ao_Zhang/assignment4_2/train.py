@@ -1,11 +1,11 @@
 ##### set specific gpu #####
 import os
-# os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-# os.environ["CUDA_VISIBLE_DEVICES"]="1"
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
 import tensorflow as tf
-# physical_devices = tf.config.experimental.list_physical_devices('GPU')
-# assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
-# tf.config.experimental.set_memory_growth(physical_devices[0], True)
+physical_devices = tf.config.experimental.list_physical_devices('GPU')
+assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
+tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 import glob
 import imageio
@@ -152,7 +152,7 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
     # parameters settings
     input_size = (32, 32, 3)
     batch_size = 256
-    epochs = 10000
+    epochs = 1000
     hm_batches_train = len(X_train) // batch_size
     hidden_layer_size = 256 # feel free to tune
     sample_size = 200
@@ -193,11 +193,13 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
         ax = fig.add_subplot(111)
     
     counter = 0
+    # np.random.shuffle(X_train)
 
     for epoch_id in tqdm(range(epochs)):
-        np.random.shuffle(X_train)
         for each_batch_train in range(hm_batches_train):
-            X_train_batch = X_train[each_batch_train*batch_size: (each_batch_train+1)*batch_size]
+            # X_train_batch = X_train[each_batch_train*batch_size: (each_batch_train+1)*batch_size]
+            batch_idx = np.random.randint(len(X_train), size=batch_size)
+            X_train_batch = X_train[batch_idx]
 
             if model_name == "GAN":
                 X_train_batch = (X_train_batch - 0.5) / 0.5
@@ -215,7 +217,7 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
                     tf.summary.scalar(model_name + '_G_loss', g_loss.numpy(), step=epoch_id*hm_batches_train + each_batch_train)
                     tf.summary.scalar(model_name + '_D_loss', d_loss.numpy(), step=epoch_id*hm_batches_train + each_batch_train)
 
-            if (epoch_id*batch_size + each_batch_train) % 100 == 0:
+            if (epoch_id*batch_size + each_batch_train) % 500 == 0:
                 if model_name == "VAE":
                     samples = model.Decoding(seed, apply_sigmoid=True)
                 else:
@@ -242,10 +244,10 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
                     fig.canvas.draw()
                     plt.pause(0.01)
             
-            if (epoch_id*batch_size + each_batch_train) % 1000 == 0:
-                checkpoint.save(file_prefix = checkpoint_prefix)
+            # if (epoch_id*batch_size + each_batch_train) % 1000 == 0:
+            #     checkpoint.save(file_prefix = checkpoint_prefix)
             
 
 
 if __name__ == "__main__":
-    train("VAE", "CIFAR", 0, 100)
+    train("GAN", "CIFAR", 0, 50)

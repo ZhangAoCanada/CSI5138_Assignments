@@ -21,83 +21,58 @@ class gan(object):
 
         self.gen = self.Generator()
         self.disc = self.Discriminator()
-        self.initial_learning_rate = 1e-3
+        self.initial_learning_rate = 1e-4
         self.crossEntropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
         self.lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
                                                 self.initial_learning_rate,
-                                                decay_steps=10000,
+                                                decay_steps=2000,
                                                 decay_rate=0.96,
                                                 staircase=True)
-        self.gen_optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr_schedule)
-        self.disc_optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr_schedule)
+        self.gen_optimizer = tf.keras.optimizers.Adam(1e-4)
+        self.disc_optimizer = tf.keras.optimizers.Adam(1e-4)
 
     def Noise(self,):
         return tf.random.normal([self.batch_size, self.latent_size])
 
     def Generator(self,):
         model = tf.keras.Sequential()
-        model.add(layers.Dense(self.w//4*self.h//4*self.hidden_size, use_bias=False, input_shape=(self.latent_size,)))
+        model.add(layers.Dense(self.w//8*self.h//8*self.hidden_size, use_bias=False, input_shape=(self.latent_size,)))
         model.add(layers.BatchNormalization())
         model.add(layers.LeakyReLU())
 
-        model.add(layers.Reshape((self.w//4, self.h//4, self.hidden_size)))
-        assert model.output_shape == (None, self.w//4, self.h//4, self.hidden_size)
+        model.add(layers.Reshape((self.w//8, self.h//8, self.hidden_size)))
 
-        model.add(layers.Conv2DTranspose(self.hidden_size//2, (3, 3), strides=(1, 1), padding='same', use_bias=False))
-        assert model.output_shape == (None, self.w//4, self.h//4, self.hidden_size//2)
+        # model.add(layers.Conv2DTranspose(self.hidden_size//2, (5, 5), strides=(1, 1), padding='same', use_bias=False))
+        # model.add(layers.BatchNormalization())
+        # model.add(layers.LeakyReLU())
+
+        model.add(layers.Conv2DTranspose(self.hidden_size//2, (5, 5), strides=(2, 2), padding='same', use_bias=False))
         model.add(layers.BatchNormalization())
         model.add(layers.LeakyReLU())
 
-        if self.num_layers >= 1:
-            model.add(layers.Conv2DTranspose(self.hidden_size//2, (3, 3), strides=(1, 1), padding='same', use_bias=False))
-            model.add(layers.BatchNormalization())
-            model.add(layers.LeakyReLU())
-
-        model.add(layers.Conv2DTranspose(self.hidden_size//4, (3, 3), strides=(2, 2), padding='same', use_bias=False))
-        assert model.output_shape == (None, self.w//2, self.h//2, self.hidden_size//4)
+        model.add(layers.Conv2DTranspose(self.hidden_size//4, (5, 5), strides=(2, 2), padding='same', use_bias=False))
         model.add(layers.BatchNormalization())
         model.add(layers.LeakyReLU())
 
-        if self.num_layers >= 2:
-            model.add(layers.Conv2DTranspose(self.hidden_size//4, (3, 3), strides=(1, 1), padding='same', use_bias=False))
-            model.add(layers.BatchNormalization())
-            model.add(layers.LeakyReLU())
-
-        model.add(layers.Conv2DTranspose(self.ch_in, (3, 3), strides=(2, 2), padding='same', use_bias=False, activation='tanh'))
-        assert model.output_shape == (None, self.w, self.h, self.ch_in)
+        model.add(layers.Conv2DTranspose(self.ch_in, (5, 5), strides=(2, 2), padding='same', use_bias=False, activation='tanh'))
 
         return model
 
     def Discriminator(self,):
         model = tf.keras.Sequential()
 
-        model.add(layers.Conv2D(self.hidden_size//4, (3, 3), strides=(1, 1), padding='same',
+        model.add(layers.Conv2D(self.hidden_size//4, (5, 5), strides=(2, 2), padding='same',
                                         input_shape=[self.w, self.h, self.ch_in]))
         model.add(layers.LeakyReLU())
         model.add(layers.Dropout(0.3))
 
-        if self.num_layers >= 1:
-            model.add(layers.Conv2D(self.hidden_size//4, (3, 3), strides=(1, 1), padding='same'))
-            model.add(layers.LeakyReLU())
-            model.add(layers.Dropout(0.3))
-
-        model.add(layers.Conv2D(self.hidden_size//2, (3, 3), strides=(2, 2), padding='same'))
+        model.add(layers.Conv2D(self.hidden_size//2, (5, 5), strides=(2, 2), padding='same'))
         model.add(layers.LeakyReLU())
         model.add(layers.Dropout(0.3))
 
-        if self.num_layers >= 2:
-            model.add(layers.Conv2D(self.hidden_size//2, (3, 3), strides=(1, 1), padding='same'))
-            model.add(layers.LeakyReLU())
-            model.add(layers.Dropout(0.3))
-
-        model.add(layers.Conv2D(self.hidden_size, (3, 3), strides=(2, 2), padding='same'))
+        model.add(layers.Conv2D(self.hidden_size, (5, 5), strides=(2, 2), padding='same'))
         model.add(layers.LeakyReLU())
         model.add(layers.Dropout(0.3))
-
-        if self.num_layers >= 3:
-            model.add(layers.Conv2D(self.hidden_size, (3, 3), strides=(1, 1), padding='same'))
-            model.add(layers.LeakyReLU())
-            model.add(layers.Dropout(0.3))
 
         model.add(layers.Flatten())
         model.add(layers.Dense(1))

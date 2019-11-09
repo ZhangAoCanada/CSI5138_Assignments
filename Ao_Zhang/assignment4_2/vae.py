@@ -24,7 +24,7 @@ class vae(tf.keras.Model):
         self.dec = self.Decoder()
         self.enc = self.Encoder()
         self.initial_learning_rate = 1e-3
-        self.crossEntropy = tf.keras.losses.BinaryCrossentropy(from_logits=True, reduction='sum')
+        self.crossEntropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
         self.lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
                                                 self.initial_learning_rate,
                                                 decay_steps=100000,

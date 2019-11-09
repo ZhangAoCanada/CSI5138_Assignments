@@ -21,11 +21,11 @@ class wgan(object):
 
         self.gen = self.Generator()
         self.disc = self.Discriminator()
-        self.initial_learning_rate = 1e-4
+        self.initial_learning_rate = 2e-4
         self.crossEntropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
         self.lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
                                                 self.initial_learning_rate,
-                                                decay_steps=10000,
+                                                decay_steps=2000,
                                                 decay_rate=0.96,
                                                 staircase=True)
         self.gen_optimizer = tf.keras.optimizers.RMSprop(learning_rate=self.lr_schedule)
@@ -41,20 +41,16 @@ class wgan(object):
         model.add(layers.LeakyReLU())
 
         model.add(layers.Reshape((self.w//4, self.h//4, self.hidden_size)))
-        assert model.output_shape == (None, self.w//4, self.h//4, self.hidden_size)
 
         model.add(layers.Conv2DTranspose(self.hidden_size//2, (3, 3), strides=(1, 1), padding='same', use_bias=False))
-        assert model.output_shape == (None, self.w//4, self.h//4, self.hidden_size//2)
         model.add(layers.BatchNormalization())
         model.add(layers.LeakyReLU())
 
         model.add(layers.Conv2DTranspose(self.hidden_size//4, (5, 5), strides=(2, 2), padding='same', use_bias=False))
-        assert model.output_shape == (None, self.w//2, self.h//2, self.hidden_size//4)
         model.add(layers.BatchNormalization())
         model.add(layers.LeakyReLU())
 
         model.add(layers.Conv2DTranspose(self.ch_in, (5, 5), strides=(2, 2), padding='same', use_bias=False, activation='tanh'))
-        assert model.output_shape == (None, self.w, self.h, self.ch_in)
 
         return model
 
@@ -80,7 +76,7 @@ class wgan(object):
         return model
 
     def DiscriminatorLoss(self, real_output, fake_output):
-        loss = tf.reduce_mean(real_output) - tf.reduce_mean(fake_output)
+        loss = tf.reduce_mean(fake_output) - tf.reduce_mean(real_output)
         return loss
 
     def GeneratorLoss(self, fake_output):
@@ -96,17 +92,16 @@ class wgan(object):
             real_output = self.disc(images, training=True)
             fake_output = self.disc(generated_images, training=True)
 
-            disc_loss = - self.DiscriminatorLoss(real_output, fake_output)
+            disc_loss = self.DiscriminatorLoss(real_output, fake_output)
             gen_loss = self.GeneratorLoss(fake_output)
 
         gradients_of_discriminator = disc_tape.gradient(disc_loss, self.disc.trainable_variables)
         gradients_of_generator = gen_tape.gradient(gen_loss, self.gen.trainable_variables)
 
-        for _ in range(5):
-            self.disc_optimizer.apply_gradients(zip(gradients_of_discriminator, self.disc.trainable_variables))
-            self.ClipDiscWeights()
-
+        self.disc_optimizer.apply_gradients(zip(gradients_of_discriminator, self.disc.trainable_variables))
         self.gen_optimizer.apply_gradients(zip(gradients_of_generator, self.gen.trainable_variables))
+
+        self.ClipDiscWeights()
 
         return gen_loss, disc_loss
 
