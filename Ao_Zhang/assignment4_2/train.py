@@ -9,6 +9,8 @@ tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 import glob
 import imageio
+# import matplotlib
+# matplotlib.use("tkagg")
 import matplotlib.pyplot as plt
 import numpy as np
 import PIL
@@ -18,7 +20,9 @@ import pickle
 from tqdm import tqdm
 from mlxtend.data import loadlocal_mnist
 
+from vae import vae
 from gan import gan
+from wgan import wgan
 
 ############################## MNIST LOADING ############################
 def TranslateLables(labels, num_class):
@@ -148,21 +152,35 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
     # parameters settings
     input_size = (32, 32, 3)
     batch_size = 256
-    epochs = 1000
+    epochs = 10000
     hm_batches_train = len(X_train) // batch_size
     hidden_layer_size = 256 # feel free to tune
     sample_size = 200
 
-    model = gan(input_size, num_hidden, hidden_layer_size, latent_size, batch_size)
+    if model_name == "VAE":
+        model = vae(input_size, num_hidden, hidden_layer_size, latent_size, batch_size)
+    elif model_name == "GAN":
+        model = gan(input_size, num_hidden, hidden_layer_size, latent_size, batch_size)
+    elif model_name == "WGAN":
+        model = wgan(input_size, num_hidden, hidden_layer_size, latent_size, batch_size)
+    else:
+        raise ValueError("Please input the right model name.")
 
     seed = tf.random.normal([sample_size, latent_size])
 
-    checkpoint_dir = './training_checkpoints'
+    checkpoint_dir = './checkpoints/' + model_name + "_" + dataset_name + "_" + \
+                str(num_hidden) + "_" + str(latent_size) + "_" + str(hidden_layer_size)
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
-    checkpoint = tf.train.Checkpoint(generator_optimizer=model.gen_optimizer,
-                                    discriminator_optimizer=model.disc_optimizer,
-                                    generator=model.gen,
-                                    discriminator=model.disc)
+    if model_name == "VAE":
+        checkpoint = tf.train.Checkpoint(optimizer=model.optimizer,
+                                        encoder=model.enc,
+                                        decoder=model.dec)
+    else:
+        checkpoint = tf.train.Checkpoint(generator_optimizer=model.gen_optimizer,
+                                        discriminator_optimizer=model.disc_optimizer,
+                                        generator=model.gen,
+                                        discriminator=model.disc)
+    
 
     log_dir = "logs/" + model_name + "_" + dataset_name + "_" + \
             str(num_hidden) + "_" + str(latent_size) + "_" + str(hidden_layer_size)
@@ -181,19 +199,28 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
         for each_batch_train in range(hm_batches_train):
             X_train_batch = X_train[each_batch_train*batch_size: (each_batch_train+1)*batch_size]
             X_train_batch = (X_train_batch - 0.5) / 0.5
-            g_loss, d_loss = model.Training(X_train_batch)
+
+            if model_name == "VAE":
+                v_loss = model.Training(X_train_batch)
+                print('------------------------')
+                print(v_loss.numpy().shape)
+            else:
+                g_loss, d_loss = model.Training(X_train_batch)
             
             with summary_writer.as_default():
-                tf.summary.scalar('G_loss', g_loss.numpy(), step=epoch_id*hm_batches_train + each_batch_train)
-                tf.summary.scalar('D_loss', d_loss.numpy(), step=epoch_id*hm_batches_train + each_batch_train)
+                if model_name == "VAE":
+                    tf.summary.scalar(model_name + '_loss', v_loss.numpy(), step=epoch_id*hm_batches_train + each_batch_train)
+                else:
+                    tf.summary.scalar(model_name + '_G_loss', g_loss.numpy(), step=epoch_id*hm_batches_train + each_batch_train)
+                    tf.summary.scalar(model_name + '_D_loss', d_loss.numpy(), step=epoch_id*hm_batches_train + each_batch_train)
 
             if (epoch_id*batch_size + each_batch_train) % 100 == 0:
-                checkpoint.save(file_prefix = checkpoint_prefix)
-
-                samples = model.gen(seed, training=False)
+                if model_name == "VAE":
+                    samples = model.dec(seed, training=False)
+                else:
+                    samples = model.gen(seed, training=False)
                 samples = samples.numpy()
                 samples = 0.5 * samples + 0.5
-
 
                 if if_save:
                     dir_n = "samples/" + model_name + "_" + dataset_name + "_" + str(num_hidden) + "_" + str(latent_size) + "_" + str(hidden_layer_size)
@@ -212,6 +239,10 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
                     ax.imshow(disp_imgs)
                     fig.canvas.draw()
                     plt.pause(0.01)
+            
+            if (epoch_id*batch_size + each_batch_train) % 1000 == 0:
+                checkpoint.save(file_prefix = checkpoint_prefix)
+            
 
 
 if __name__ == "__main__":
