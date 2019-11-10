@@ -42,10 +42,6 @@ class gan(object):
 
         model.add(layers.Reshape((self.w//8, self.h//8, self.hidden_size)))
 
-        # model.add(layers.Conv2DTranspose(self.hidden_size//2, (5, 5), strides=(1, 1), padding='same', use_bias=False))
-        # model.add(layers.BatchNormalization())
-        # model.add(layers.LeakyReLU())
-
         model.add(layers.Conv2DTranspose(self.hidden_size//2, (5, 5), strides=(2, 2), padding='same', use_bias=False))
         model.add(layers.BatchNormalization())
         model.add(layers.LeakyReLU())

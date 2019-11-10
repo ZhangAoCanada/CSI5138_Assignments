@@ -28,21 +28,21 @@ class wgan(object):
                                                 decay_steps=2000,
                                                 decay_rate=0.96,
                                                 staircase=True)
-        self.gen_optimizer = tf.keras.optimizers.RMSprop(learning_rate=self.lr_schedule)
-        self.disc_optimizer = tf.keras.optimizers.RMSprop(learning_rate=self.lr_schedule)
+        self.gen_optimizer = tf.keras.optimizers.RMSprop(learning_rate=1e-4)
+        self.disc_optimizer = tf.keras.optimizers.RMSprop(learning_rate=1e-4)
 
     def Noise(self,):
         return tf.random.normal([self.batch_size, self.latent_size])
 
     def Generator(self,):
         model = tf.keras.Sequential()
-        model.add(layers.Dense(self.w//4*self.h//4*self.hidden_size, use_bias=False, input_shape=(self.latent_size,)))
+        model.add(layers.Dense(self.w//8*self.h//8*self.hidden_size, use_bias=False, input_shape=(self.latent_size,)))
         model.add(layers.BatchNormalization())
         model.add(layers.LeakyReLU())
 
-        model.add(layers.Reshape((self.w//4, self.h//4, self.hidden_size)))
+        model.add(layers.Reshape((self.w//8, self.h//8, self.hidden_size)))
 
-        model.add(layers.Conv2DTranspose(self.hidden_size//2, (3, 3), strides=(1, 1), padding='same', use_bias=False))
+        model.add(layers.Conv2DTranspose(self.hidden_size//2, (5, 5), strides=(2, 2), padding='same', use_bias=False))
         model.add(layers.BatchNormalization())
         model.add(layers.LeakyReLU())
 
@@ -57,7 +57,7 @@ class wgan(object):
     def Discriminator(self,):
         model = tf.keras.Sequential()
 
-        model.add(layers.Conv2D(self.hidden_size//4, (3, 3), strides=(1, 1), padding='same',
+        model.add(layers.Conv2D(self.hidden_size//4, (5, 5), strides=(2, 2), padding='same',
                                         input_shape=[self.w, self.h, self.ch_in]))
         model.add(layers.LeakyReLU())
         model.add(layers.Dropout(0.3))
@@ -95,12 +95,12 @@ class wgan(object):
             disc_loss = self.DiscriminatorLoss(real_output, fake_output)
             gen_loss = self.GeneratorLoss(fake_output)
 
-        gradients_of_discriminator = disc_tape.gradient(disc_loss, self.disc.trainable_variables)
         gradients_of_generator = gen_tape.gradient(gen_loss, self.gen.trainable_variables)
+        gradients_of_discriminator = disc_tape.gradient(disc_loss, self.disc.trainable_variables)
 
-        self.disc_optimizer.apply_gradients(zip(gradients_of_discriminator, self.disc.trainable_variables))
         self.gen_optimizer.apply_gradients(zip(gradients_of_generator, self.gen.trainable_variables))
 
+        self.disc_optimizer.apply_gradients(zip(gradients_of_discriminator, self.disc.trainable_variables))
         self.ClipDiscWeights()
 
         return gen_loss, disc_loss

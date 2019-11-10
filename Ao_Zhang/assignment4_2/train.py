@@ -166,8 +166,6 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
     else:
         raise ValueError("Please input the right model name.")
 
-    seed = tf.random.normal([sample_size, latent_size])
-
     checkpoint_dir = './checkpoints/' + model_name + "_" + dataset_name + "_" + \
                 str(num_hidden) + "_" + str(latent_size) + "_" + str(hidden_layer_size)
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
@@ -218,6 +216,7 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
                     tf.summary.scalar(model_name + '_D_loss', d_loss.numpy(), step=epoch_id*hm_batches_train + each_batch_train)
 
             if (epoch_id*batch_size + each_batch_train) % 500 == 0:
+                seed = tf.random.normal([sample_size, latent_size])
                 if model_name == "VAE":
                     samples = model.Decoding(seed, apply_sigmoid=True)
                 else:
@@ -250,4 +249,4 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
 
 
 if __name__ == "__main__":
-    train("GAN", "CIFAR", 0, 50)
+    train("WGAN", "CIFAR", 0, 50)
