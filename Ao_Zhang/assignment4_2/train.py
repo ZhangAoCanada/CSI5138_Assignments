@@ -273,5 +273,3 @@ if __name__ == "__main__":
     for num_hidden in num_hiddens:
         for model_name in model_names:
             train(model_name, "CIFAR", num_hidden, 100)
-    
-    # train("WGAN", "CIFAR", 0, 100)

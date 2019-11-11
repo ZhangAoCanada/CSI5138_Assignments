@@ -144,7 +144,6 @@ class gan(object):
             # model.add(layers.Dropout(0.3))
 
         model.add(layers.Flatten())
-        # model.add(layers.Dropout(0.5))
         model.add(layers.Dense(1))
 
         return model
