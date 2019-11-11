@@ -151,9 +151,13 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
         raise ValueError("Please input the right dataset name.")
 
     # parameters settings
-    input_size = (32, 32, 3)
+    if dataset_name == "CIFAR":
+        input_size = (32, 32, 3)
+    else:
+        input_size = (28, 28, 1)
+
     batch_size = 256
-    epochs = 1500
+    epochs = 2000
     hm_batches_train = len(X_train) // batch_size
     hidden_layer_size = 256 # feel free to tune
     sample_size = 600
@@ -205,12 +209,14 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
 
             if model_name == "VAE":
                 v_loss = model.Training(X_train_batch)
-            elif model_name == "GAN":
-                g_loss, d_loss = model.Training(X_train_batch)
             else:
-                for _ in range(5):
-                    d_loss = model.Training_D(X_train_batch)
-                g_loss = model.Training_G(X_train_batch)
+                g_loss, d_loss = model.Training(X_train_batch)
+            # elif model_name == "GAN":
+            #     g_loss, d_loss = model.Training(X_train_batch)
+            # else:
+            #     for _ in range(3):
+            #         d_loss = model.Training_D(X_train_batch)
+            #     g_loss = model.Training_G(X_train_batch)
             
             with summary_writer.as_default():
                 if model_name == "VAE":
@@ -262,16 +268,16 @@ if __name__ == "__main__":
         "MNIST"
         "CIFAR"
     """
-    # model_names = ["VAE", "GAN", "WGAN"]
-    # lantent_sizes = [10, 20, 50, 100, 200]
-    # num_hiddens = [0, 1, 2, 3]
+    model_names = ["VAE", "GAN", "WGAN"]
+    lantent_sizes = [50, 100, 10, 20, 200]
+    num_hiddens = [0, 1, 2, 3]
     
-    # for latent_size in lantent_sizes:
-    #     for model_name in model_names:
-    #         train(model_name, "CIFAR", 0, latent_size)
+    for latent_size in lantent_sizes:
+        for model_name in model_names:
+            train(model_name, "CIFAR", 0, latent_size)
 
-    # for num_hidden in num_hiddens:
-    #     for model_name in model_names:
-    #         train(model_name, "CIFAR", num_hidden, 100)
+    for num_hidden in num_hiddens:
+        for model_name in model_names:
+            train(model_name, "CIFAR", num_hidden, 100)
 
-    train("WGAN", "CIFAR", 0, 50)
+    # train("WGAN", "CIFAR", 0, 50)
