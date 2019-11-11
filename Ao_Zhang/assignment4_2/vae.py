@@ -21,7 +21,7 @@ class vae(tf.keras.Model):
         self.hidden_size = hidden_layer_size
         self.batch_size = batch_size
         self.sample_size = 1
-        self.k_s = 5
+        self.k_s = 4
 
         self.dec = self.Decoder()
         self.enc = self.Encoder()

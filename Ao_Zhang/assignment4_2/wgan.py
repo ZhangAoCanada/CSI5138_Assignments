@@ -19,7 +19,7 @@ class wgan(object):
         self.hidden_size = hidden_layer_size
         self.batch_size = batch_size
         self.sample_size = 1
-        self.k_s = 5
+        self.k_s = 4
 
         self.gen = self.Generator()
         self.disc = self.Discriminator()
