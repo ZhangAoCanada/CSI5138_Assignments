@@ -30,9 +30,9 @@ def ReadAllSamples(model_name, dataset_name, num_hidden, latent_size, hidden_lay
                     "_" + str(latent_size) + "_" + str(hidden_layer_size) + "/" + str(file_id) + ".npy"
         current_samples = ReadSamples(file_n)
         if dataset_name == "MNIST":
-            current_samples = current_samples.reshape((10, 20, 28, 28))
+            current_samples = current_samples.reshape((20, 30, 28, 28))
         else:
-            current_samples = current_samples.reshape((10, 20, 32, 32, 3))
+            current_samples = current_samples.reshape((20, 30, 32, 32, 3))
 
         all_imgs = []
         for i in range(3):
@@ -49,7 +49,7 @@ def ReadAllSamples(model_name, dataset_name, num_hidden, latent_size, hidden_lay
         ax1.axis("off")
         ax1.set_title(str(file_id))
         fig.canvas.draw()
-        plt.pause(0.5)
+        plt.pause(3)
 
 
 
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     dataset_name = "CIFAR"
 
     num_hidden = 0
-    latent_size = 50
+    latent_size = 150
     hidden_layer_size = 256
 
     ReadAllSamples(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size)

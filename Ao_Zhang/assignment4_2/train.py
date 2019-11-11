@@ -137,6 +137,7 @@ def FormSamples(dataset_name, current_samples):
     return all_imgs
 
 def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_save=True):
+    tf.keras.backend.clear_session()
     if dataset_name == "MNIST":
         Mnist_local_path = "mnist/"
         X_train, Y_train, X_test, Y_test, input_size, output_size = GetMnistData(Mnist_local_path)
@@ -152,17 +153,17 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
     # parameters settings
     input_size = (32, 32, 3)
     batch_size = 256
-    epochs = 1000
+    epochs = 800
     hm_batches_train = len(X_train) // batch_size
     hidden_layer_size = 256 # feel free to tune
-    sample_size = 200
+    sample_size = 600
 
     if model_name == "VAE":
-        model = vae(input_size, num_hidden, hidden_layer_size, latent_size, batch_size)
+        model = vae(input_size, num_hidden, hidden_layer_size, latent_size, batch_size, dataset_name)
     elif model_name == "GAN":
-        model = gan(input_size, num_hidden, hidden_layer_size, latent_size, batch_size)
+        model = gan(input_size, num_hidden, hidden_layer_size, latent_size, batch_size, dataset_name)
     elif model_name == "WGAN":
-        model = wgan(input_size, num_hidden, hidden_layer_size, latent_size, batch_size)
+        model = wgan(input_size, num_hidden, hidden_layer_size, latent_size, batch_size, dataset_name)
     else:
         raise ValueError("Please input the right model name.")
 
@@ -199,12 +200,11 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
             batch_idx = np.random.randint(len(X_train), size=batch_size)
             X_train_batch = X_train[batch_idx]
 
-            if model_name == "GAN":
+            if model_name == "GAN" or model_name == "WGAN":
                 X_train_batch = (X_train_batch - 0.5) / 0.5
 
             if model_name == "VAE":
                 v_loss = model.Training(X_train_batch)
-                print(v_loss)
             else:
                 g_loss, d_loss = model.Training(X_train_batch)
             
@@ -215,14 +215,14 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
                     tf.summary.scalar(model_name + '_G_loss', g_loss.numpy(), step=epoch_id*hm_batches_train + each_batch_train)
                     tf.summary.scalar(model_name + '_D_loss', d_loss.numpy(), step=epoch_id*hm_batches_train + each_batch_train)
 
-            if (epoch_id*batch_size + each_batch_train) % 500 == 0:
+            if (epoch_id*batch_size + each_batch_train) % 200 == 0:
                 seed = tf.random.normal([sample_size, latent_size])
                 if model_name == "VAE":
                     samples = model.Decoding(seed, apply_sigmoid=True)
                 else:
                     samples = model.gen(seed, training=False)
                 samples = samples.numpy()
-                if model_name == "GAN":
+                if model_name == "GAN" or model_name == "WGAN":
                     samples = 0.5 * samples + 0.5
 
                 if if_save:
@@ -243,10 +243,29 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
                     fig.canvas.draw()
                     plt.pause(0.01)
             
-            # if (epoch_id*batch_size + each_batch_train) % 1000 == 0:
-            #     checkpoint.save(file_prefix = checkpoint_prefix)
+            if (epoch_id*batch_size + each_batch_train) % 5000 == 0:
+                checkpoint.save(file_prefix = checkpoint_prefix)
             
 
 
 if __name__ == "__main__":
-    train("WGAN", "CIFAR", 0, 50)
+    """
+    model names:
+        "VAE"
+        "GAN"
+        "WGAN"
+    dataset names:
+        "MNIST"
+        "CIFAR"
+    """
+    model_names = ["VAE", "GAN", "WGAN"]
+    lantent_sizes = [10, 20, 50, 100, 200]
+    num_hiddens = [0, 1, 2]
+    
+    for latent_size in lantent_sizes:
+        for model_name in model_names:
+            train(model_name, "CIFAR", 0, latent_size)
+
+    for num_hidden in num_hiddens:
+        for model_name in model_names:
+            train(model_name, "CIFAR", num_hidden, 100)
