@@ -96,52 +96,52 @@ class gan(object):
                                             input_shape=[self.w, self.h, self.ch_in]))
             # model.add(layers.BatchNormalization())
             model.add(layers.LeakyReLU(alpha=0.2))
-            # model.add(layers.Dropout(0.2))
+            model.add(layers.Dropout(0.2))
 
             if self.num_layers >= 1:
                 model.add(layers.Conv2D(self.hidden_size//4, (self.k_s, self.k_s), strides=(1, 1), padding='same'))
                 # model.add(layers.BatchNormalization())
                 model.add(layers.LeakyReLU(alpha=0.2))
-                # model.add(layers.Dropout(0.2))
+                model.add(layers.Dropout(0.2))
 
             model.add(layers.Conv2D(self.hidden_size//2, (self.k_s, self.k_s), strides=(2, 2), padding='same'))
             # model.add(layers.BatchNormalization())
             model.add(layers.LeakyReLU(alpha=0.2))
-            # model.add(layers.Dropout(0.2))
+            model.add(layers.Dropout(0.2))
 
             if self.num_layers >= 2:
                 model.add(layers.Conv2D(self.hidden_size//2, (self.k_s, self.k_s), strides=(1, 1), padding='same'))
                 # model.add(layers.BatchNormalization())
                 model.add(layers.LeakyReLU(alpha=0.2))
-                # model.add(layers.Dropout(0.2))
+                model.add(layers.Dropout(0.2))
 
             model.add(layers.Conv2D(self.hidden_size, (self.k_s, self.k_s), strides=(2, 2), padding='same'))
             # model.add(layers.BatchNormalization())
             model.add(layers.LeakyReLU(alpha=0.2))
-            # model.add(layers.Dropout(0.2))
+            model.add(layers.Dropout(0.2))
         else:
             model.add(layers.Conv2D(self.hidden_size//2, (self.k_s, self.k_s), strides=(2, 2), padding='same',
                                             input_shape=[self.w, self.h, self.ch_in]))
             # model.add(layers.BatchNormalization())
             model.add(layers.LeakyReLU(alpha=0.2))
-            # model.add(layers.Dropout(0.2))
+            model.add(layers.Dropout(0.2))
 
             if self.num_layers >= 1:
                 model.add(layers.Conv2D(self.hidden_size//2, (self.k_s, self.k_s), strides=(1, 1), padding='same'))
                 # model.add(layers.BatchNormalization())
                 model.add(layers.LeakyReLU(alpha=0.2))
-                # model.add(layers.Dropout(0.2))
+                model.add(layers.Dropout(0.2))
 
         model.add(layers.Conv2D(self.hidden_size, (self.k_s, self.k_s), strides=(2, 2), padding='same'))
         # model.add(layers.BatchNormalization())
         model.add(layers.LeakyReLU(alpha=0.2))
-        # model.add(layers.Dropout(0.2))
+        model.add(layers.Dropout(0.2))
 
         if self.num_layers >= 3:
             model.add(layers.Conv2D(self.hidden_size, (self.k_s, self.k_s), strides=(1, 1), padding='same'))
             # model.add(layers.BatchNormalization())
             model.add(layers.LeakyReLU(alpha=0.2))
-            # model.add(layers.Dropout(0.2))
+            model.add(layers.Dropout(0.2))
 
         model.add(layers.Flatten())
         model.add(layers.Dense(1))
