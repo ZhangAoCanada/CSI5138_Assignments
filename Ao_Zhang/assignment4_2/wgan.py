@@ -122,15 +122,11 @@ class wgan(object):
         return model
 
     def DiscriminatorLoss(self, real_output, fake_output):
-        loss = tf.reduce_mean(fake_output) - tf.reduce_mean(real_output)
-        
-        # grad_l2 = tf.sqrt(tf.reduce_sum(tf.square(inter_grad), axis=[1,2,3]))
-        # gradient_penalty = tf.reduce_mean((grad_l2-1)**2)
-        # loss += 10 * gradient_penalty
+        loss = tf.reduce_mean(real_output) - tf.reduce_mean(fake_output)
         return loss
 
     def GeneratorLoss(self, fake_output):
-        return - tf.reduce_mean(fake_output)
+        return tf.reduce_mean(fake_output)
 
     def InterpolatedImage(self, real_img, gen_img):
         alpha = tf.random.normal([self.batch_size, 1, 1, 1])
@@ -145,10 +141,6 @@ class wgan(object):
 
             real_output = self.disc(images, training=True)
             fake_output = self.disc(generated_images, training=True)
-
-            # inter_image = self.InterpolatedImage(images, generated_images)
-            # inter_output = self.disc(inter_image)
-            # inter_grad = tf.gradients(inter_output, [inter_image,])[0]
 
             disc_loss = self.DiscriminatorLoss(real_output, fake_output)
             gen_loss = self.GeneratorLoss(fake_output)
