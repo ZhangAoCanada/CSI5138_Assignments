@@ -49,7 +49,7 @@ def ReadAllSamples(model_name, dataset_name, num_hidden, latent_size, hidden_lay
         ax1.axis("off")
         ax1.set_title(str(file_id))
         fig.canvas.draw()
-        plt.pause(3)
+        plt.pause(1)
 
 
 
@@ -63,11 +63,11 @@ if __name__ == "__main__":
         "MNIST"
         "CIFAR"
     """
-    model_name = "GAN"
+    model_name = "WGAN"
     dataset_name = "CIFAR"
 
     num_hidden = 0
-    latent_size = 150
+    latent_size = 10
     hidden_layer_size = 256
 
     ReadAllSamples(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size)

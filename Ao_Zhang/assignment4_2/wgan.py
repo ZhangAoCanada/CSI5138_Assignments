@@ -27,7 +27,7 @@ class wgan(object):
         self.crossEntropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
         self.lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
                                                 self.initial_learning_rate,
-                                                decay_steps=10000,
+                                                decay_steps=20000,
                                                 decay_rate=0.96,
                                                 staircase=True)
         self.gen_optimizer = tf.keras.optimizers.RMSprop(learning_rate=self.lr_schedule)
@@ -94,52 +94,52 @@ class wgan(object):
         if self.dataset_name == "CIFAR":
             model.add(layers.Conv2D(self.hidden_size//4, (self.k_s, self.k_s), strides=(2, 2), padding='same',
                                             input_shape=[self.w, self.h, self.ch_in]))
-            model.add(layers.BatchNormalization())
+            # model.add(layers.BatchNormalization())
             model.add(layers.LeakyReLU(alpha=0.2))
             # model.add(layers.Dropout(0.3))
 
             if self.num_layers >= 1:
                 model.add(layers.Conv2D(self.hidden_size//4, (self.k_s, self.k_s), strides=(1, 1), padding='same'))
-                model.add(layers.BatchNormalization())
+                # model.add(layers.BatchNormalization())
                 model.add(layers.LeakyReLU(alpha=0.2))
                 # model.add(layers.Dropout(0.3))
 
             model.add(layers.Conv2D(self.hidden_size//2, (self.k_s, self.k_s), strides=(2, 2), padding='same'))
-            model.add(layers.BatchNormalization())
+            # model.add(layers.BatchNormalization())
             model.add(layers.LeakyReLU(alpha=0.2))
             # model.add(layers.Dropout(0.3))
 
             if self.num_layers >= 2:
                 model.add(layers.Conv2D(self.hidden_size//2, (self.k_s, self.k_s), strides=(1, 1), padding='same'))
-                model.add(layers.BatchNormalization())
+                # model.add(layers.BatchNormalization())
                 model.add(layers.LeakyReLU(alpha=0.2))
                 # model.add(layers.Dropout(0.3))
 
             model.add(layers.Conv2D(self.hidden_size, (self.k_s, self.k_s), strides=(2, 2), padding='same'))
-            model.add(layers.BatchNormalization())
+            # model.add(layers.BatchNormalization())
             model.add(layers.LeakyReLU(alpha=0.2))
             # model.add(layers.Dropout(0.3))
         else:
             model.add(layers.Conv2D(self.hidden_size//2, (self.k_s, self.k_s), strides=(2, 2), padding='same',
                                             input_shape=[self.w, self.h, self.ch_in]))
-            model.add(layers.BatchNormalization())
+            # model.add(layers.BatchNormalization())
             model.add(layers.LeakyReLU(alpha=0.2))
             # model.add(layers.Dropout(0.3))
 
             if self.num_layers >= 1:
                 model.add(layers.Conv2D(self.hidden_size//2, (self.k_s, self.k_s), strides=(1, 1), padding='same'))
-                model.add(layers.BatchNormalization())
+                # model.add(layers.BatchNormalization())
                 model.add(layers.LeakyReLU(alpha=0.2))
                 # model.add(layers.Dropout(0.3))
 
         model.add(layers.Conv2D(self.hidden_size, (self.k_s, self.k_s), strides=(2, 2), padding='same'))
-        model.add(layers.BatchNormalization())
+        # model.add(layers.BatchNormalization())
         model.add(layers.LeakyReLU(alpha=0.2))
         # model.add(layers.Dropout(0.3))
 
         if self.num_layers >= 3:
             model.add(layers.Conv2D(self.hidden_size, (self.k_s, self.k_s), strides=(1, 1), padding='same'))
-            model.add(layers.BatchNormalization())
+            # model.add(layers.BatchNormalization())
             model.add(layers.LeakyReLU(alpha=0.2))
             # model.add(layers.Dropout(0.3))
 
