@@ -157,7 +157,7 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
         input_size = (28, 28, 1)
 
     batch_size = 256
-    epochs = 2000
+    epochs = 1500
     hm_batches_train = len(X_train) // batch_size
     hidden_layer_size = 256 # feel free to tune
     sample_size = 600
@@ -268,7 +268,7 @@ if __name__ == "__main__":
         "MNIST"
         "CIFAR"
     """
-    model_names = ["VAE", "GAN", "WGAN"]
+    model_names = ["GAN", "VAE", "WGAN"]
     lantent_sizes = [50, 100, 10, 20, 200]
     num_hiddens = [0, 1, 2, 3]
     

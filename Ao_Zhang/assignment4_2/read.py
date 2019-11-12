@@ -25,7 +25,7 @@ def ReadAllSamples(model_name, dataset_name, num_hidden, latent_size, hidden_lay
 
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
-    for file_id in range(100, num_files):
+    for file_id in range(200, num_files):
         file_n = "samples/" + model_name + "_" + dataset_name + "_" + str(num_hidden) + \
                     "_" + str(latent_size) + "_" + str(hidden_layer_size) + "/" + str(file_id) + ".npy"
         current_samples = ReadSamples(file_n)
@@ -35,9 +35,9 @@ def ReadAllSamples(model_name, dataset_name, num_hidden, latent_size, hidden_lay
             current_samples = current_samples.reshape((20, 30, 32, 32, 3))
 
         all_imgs = []
-        for i in range(20):
+        for i in range(5):
             row_imgs = []
-            for j in range(30):
+            for j in range(10):
                 row_imgs.append(current_samples[i, j])
             row_imgs = np.concatenate(row_imgs, axis = 1)
             all_imgs.append(row_imgs)
@@ -63,7 +63,7 @@ if __name__ == "__main__":
         "MNIST"
         "CIFAR"
     """
-    model_name = "WGAN"
+    model_name = "GAN"
     dataset_name = "CIFAR"
 
     num_hidden = 0
