@@ -268,8 +268,8 @@ if __name__ == "__main__":
         "MNIST"
         "CIFAR"
     """
-    model_names = ["GAN", "VAE", "WGAN"]
-    lantent_sizes = [50, 100, 10, 20, 200]
+    model_names = ["GAN", "WGAN", "VAE"]
+    lantent_sizes = [50, 100, 10, 20]
     num_hiddens = [0, 1, 2, 3]
     
     for latent_size in lantent_sizes:
