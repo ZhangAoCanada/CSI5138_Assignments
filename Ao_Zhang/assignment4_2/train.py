@@ -158,7 +158,7 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
         input_size = (28, 28, 1)
 
     batch_size = 256
-    epochs = 2000
+    epochs = 1500
     hm_batches_train = len(X_train) // batch_size
     hidden_layer_size = 256 # feel free to tune
     sample_size = 600
@@ -270,7 +270,7 @@ if __name__ == "__main__":
         "CIFAR"
     """
     model_names = ["GAN", "WGAN", "VAE"]
-    lantent_sizes = [50, 100, 10, 20]
+    lantent_sizes = [100, 50, 10, 20]
     num_hiddens = [0, 1, 2, 3]
     
     for latent_size in lantent_sizes:
