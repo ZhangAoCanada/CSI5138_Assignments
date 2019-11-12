@@ -19,7 +19,7 @@ class gan(object):
         self.hidden_size = hidden_layer_size
         self.batch_size = batch_size
         self.sample_size = 1
-        self.k_s = 3
+        self.k_s = 5
 
         self.gen = self.Generator()
         self.disc = self.Discriminator()
