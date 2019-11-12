@@ -30,8 +30,8 @@ class gan(object):
                                                 decay_steps=20000,
                                                 decay_rate=0.95,
                                                 staircase=True)
-        self.gen_optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr_schedule)
-        self.disc_optimizer = tf.keras.optimizers.Adam(learning_rate=self.lr_schedule)
+        self.gen_optimizer = tf.keras.optimizers.Adam(learning_rate=2e-4)
+        self.disc_optimizer = tf.keras.optimizers.Adam(learning_rate=2e-4)
 
     def Noise(self,):
         return tf.random.normal([self.batch_size, self.latent_size])
