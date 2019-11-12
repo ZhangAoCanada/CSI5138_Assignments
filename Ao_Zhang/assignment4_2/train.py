@@ -157,7 +157,7 @@ def train(model_name, dataset_name, num_hidden, latent_size, if_plot=False, if_s
         input_size = (28, 28, 1)
 
     batch_size = 256
-    epochs = 1500
+    epochs = 2000
     hm_batches_train = len(X_train) // batch_size
     hidden_layer_size = 256 # feel free to tune
     sample_size = 600
