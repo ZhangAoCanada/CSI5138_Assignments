@@ -45,10 +45,12 @@ def ReadRandomFromIds(model_name, dataset_name, num_hidden, latent_size, hidden_
         file_n = "samples/" + model_name + "_" + dataset_name + "_" + str(num_hidden) + \
                     "_" + str(latent_size) + "_" + str(hidden_layer_size) + "/" + str(file_id) + ".npy"
         current_samples = ReadSamples(file_n)
+        # select random images from the index
         current_samples_inds = np.arange(current_samples.shape[0])
         np.random.shuffle(current_samples_inds)
         current_samples = current_samples[current_samples_inds]
         samples_file = current_samples[:2]
+        # append all random images into a big list
         all_samples.append(samples_file)
     all_samples = np.concatenate(all_samples, axis = 0)
 
@@ -123,15 +125,15 @@ if __name__ == "__main__":
         "MNIST"
         "CIFAR"
     """
-    model_name = "GAN"
+    model_name = "WGAN"
     dataset_name = "CIFAR"
 
     num_hidden = 0
     latent_size = 100
     hidden_layer_size = 256
 
-    # ReadAllSamples(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size)
+    ReadAllSamples(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size)
 
-    indexes = np.random.randint(800, 1000, size=100)
+    # indexes = np.random.randint(800, 1000, size=100)
 
-    ReadRandomFromIds(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size, indexes)
+    # ReadRandomFromIds(model_name, dataset_name, num_hidden, latent_size, hidden_layer_size, indexes)
